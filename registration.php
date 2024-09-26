@@ -1,4 +1,4 @@
-<?php
+ <?php
 session_start();
 $error = isset($_SESSION['error']) ? $_SESSION['error'] : '';
 unset($_SESSION['error']);
@@ -12,6 +12,73 @@ unset($_SESSION['error']);
     <title>Регистрация</title>
     <link rel="stylesheet" href="static.css">
     <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f4f4f4;
+        }
+
+        .container {
+            max-width: 400px;
+            width: 100%; /* Адаптивная ширина */
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            text-align: left; /* Выравнивание текста по левому краю */
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        input[type="text"],
+        input[type="email"],
+        input[type="password"],
+        input[type="tel"] {
+            width: calc(100% - 20px); /* Учитываем отступы */
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            width: 100%; /* Полная ширина кнопки */
+            margin-bottom: 10px; /* Отступ между кнопками */
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        .login-link {
+            display: block;
+            text-align: center;
+            color: #007bff; /* Цвет текста для ссылки */
+            text-decoration: none; /* Убираем подчеркивание */
+            margin-top: 10px; /* Отступ сверху */
+        }
+
+        .login-link:hover {
+            text-decoration: underline; /* Подчеркивание при наведении */
+        }
+
         .modal {
             display: none;
             position: fixed;
@@ -71,10 +138,11 @@ unset($_SESSION['error']);
             <input type="tel" id="phone" name="phone" required>
 
             <button type="submit">Зарегистрироваться</button>
+            <a href="login.php" class="login-link">Уже есть аккаунт? Войти</a> <!-- Кнопка для перехода на страницу входа -->
         </form>
     </div>
 
-    <div id="errorModal" class="modal">
+<div id="errorModal" class="modal">
         <div class="modal-content">
             <span class="close">&times;</span>
             <p id="errorMessage"></p>
