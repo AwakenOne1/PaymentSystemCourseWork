@@ -7,7 +7,7 @@ if (session_status() == PHP_SESSION_NONE) {
 }
 
 if (isset($_SESSION['user_id'])) {
-    header('Location: users.php');
+    header('Location: transactions.php');
     exit();
 }
 
@@ -23,7 +23,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($user && password_verify($password, $user['password'])) {
         // Вход успешен, сохраняем ID пользователя в сессии и перенаправляем на главную страницу
         $_SESSION['user_id'] = $user['id'];
-        header('Location: users.php');
+        header('Location: transactions.php');
         exit();
     } else {
         // Неверные учетные данные, отображаем сообщение об ошибке
@@ -94,6 +94,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             background-color: #45a049;
         }
 
+        .register-link {
+            display: block;
+            text-align: center;
+            color: #007bff; /* Цвет текста для ссылки */
+            text-decoration: none; /* Убираем подчеркивание */
+            margin-top: 10px; /* Отступ сверху */
+        }
+
+        .register-link:hover {
+            text-decoration: underline; /* Подчеркивание при наведении */
+        }
+
         .modal {
             display: none;
             position: fixed;
@@ -144,6 +156,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <input type="password" id="password" name="password" required>
 
             <button type="submit">Войти</button>
+            <a href="registration.php" class="register-link">Зарегистрироваться</a> <!-- Ссылка на регистрацию -->
         </form>
     </div>
 
@@ -152,7 +165,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <span class="close">&times;</span>
             <p id="errorMessage"><?php echo isset($error) ? $error : ''; ?></p>
         </div>
-    </div><script>
+    </div>
+    <script>
         window.onload = function() {
             var error = "<?php echo isset($error) ? $error : ''; ?>";
             if (error) {
