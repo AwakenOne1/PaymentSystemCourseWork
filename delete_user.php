@@ -1,5 +1,5 @@
 <?php
-include 'db.php'; // Подключаем базу данных
+include 'includes/db.php'; // Подключаем базу данных
 
 // Проверяем, передан ли ID пользователя
 if (isset($_GET['id'])) {

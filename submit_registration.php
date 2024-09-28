@@ -1,6 +1,6 @@
 <?php
 // submit_registration.php
-include 'db.php';
+include 'includes/db.php';
 session_start();
 
 // Валидация данных

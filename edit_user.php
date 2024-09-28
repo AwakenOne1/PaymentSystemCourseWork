@@ -1,5 +1,5 @@
 <?php
-include 'db.php';
+include 'includes/db.php';
 // Получение ID пользователя из параметра запроса
 $userId = $_GET['id'];
 

@@ -1,5 +1,5 @@
 <?php
-include 'db.php';
+include 'includes/db.php';
 
 // Проверка, если пользователь уже вошел в систему, перенаправляем на главную страницу
 if (session_status() == PHP_SESSION_NONE) {
@@ -7,7 +7,7 @@ if (session_status() == PHP_SESSION_NONE) {
 }
 
 if (isset($_SESSION['user_id'])) {
-    header('Location: transactions.php');
+    header('Location: index.php');
     exit();
 }
 
@@ -23,7 +23,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($user && password_verify($password, $user['password'])) {
         // Вход успешен, сохраняем ID пользователя в сессии и перенаправляем на главную страницу
         $_SESSION['user_id'] = $user['id'];
-        header('Location: transactions.php');
+        header('Location: index.php');
         exit();
     } else {
         // Неверные учетные данные, отображаем сообщение об ошибке
