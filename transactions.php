@@ -44,8 +44,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     }
 
     // Подготовка SQL-запроса
-    $sql = "SELECT * FROM transactions WHERE UserId = ? AND Sum BETWEEN ? AND ?";
-    $params = [$user_id, $minSum, $maxSum];
+    $sql = "SELECT * FROM transactions WHERE Sum BETWEEN ? AND ?";
+    $params = [$minSum, $maxSum];
 
     if (!empty($destination)) {
         $sql .= " AND Destination REGEXP ?";
@@ -56,21 +56,23 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $stmt = $conn->prepare($sql);
 
     // Генерация строки типов для bind_param
-    $types = 'i'; // тип для user_id
-    $types .= 'dd'; // типы для minSum и maxSum
+    // 'd' - для double
+    $types = 'dd'; // типы для minSum и maxSum
     if (!empty($destination)) {
         $types .= 's'; // тип для destination
     }
 
+    // Привязка параметров
     $stmt->bind_param($types, ...$params);
     $stmt->execute();
     $result = $stmt->get_result();
     $transactions = $result->fetch_all(MYSQLI_ASSOC);
 } else {
     // Получение всех транзакций, если поиск не выполнялся
-    $transactions_result = $conn->query("SELECT * FROM transactions WHERE UserId = $user_id");
+    $transactions_result = $conn->query("SELECT * FROM transactions");
     $transactions = $transactions_result->fetch_all(MYSQLI_ASSOC);
 }
+
 
 // Закрытие соединения после выполнения всех запросов
 $conn->close();

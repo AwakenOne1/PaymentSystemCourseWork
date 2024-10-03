@@ -14,7 +14,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['create_transaction'])
     $user_id = $_SESSION['user_id']; // Получаем UserId из сессии
 
     // Проверка валидации
-    if (!is_numeric($sum) || empty($destination) || strlen($destination) > 150 || strlen($comment) > 150) {
+    if (!is_numeric($sum) || empty($destination) || strlen($destination) > 150 || strlen($comment) > 150 || $sum <=0) {
         $_SESSION['error_message'] = "Некорректные данные.";
         header('Location: transactions.php');
         exit();
