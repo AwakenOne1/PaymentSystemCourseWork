@@ -65,10 +65,15 @@
         for (const field of fields) {
             const element = document.getElementById(field);
             const value = field === 'sum' ? parseFloat(element.value) : element.value;
-
-            if (field === 'sum' && value > maxDecimalValue) {
-                alert('Сумма должна быть меньше ' + maxDecimalValue.toFixed(2) + '.');
-                return false; // Отменяем отправку формы
+            if (field === 'sum' || field === 'edit_sum') {
+                if (value <= 0) {
+                    alert('Сумма должна быть больше 0.');
+                    return false; // Отменяем отправку формы
+                }
+                if (value > maxDecimalValue) {
+                    alert('Сумма должна быть меньше ' + maxDecimalValue.toFixed(2) + '.');
+                    return false; // Отменяем отправку формы
+                }
             }
 
             if ((field === 'destination' || field === 'comment') && value.length > 150) {
