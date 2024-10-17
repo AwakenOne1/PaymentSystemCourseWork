@@ -9,9 +9,9 @@
             <label for="sum">Сумма:</label>
             <input type="number" step="0.01" name="sum" id="sum" required>
             <label for="destination">Кому:</label>
-            <input type="text" name="destination" id="destination" maxlength="150" required>
+            <input type="text" name="destination" id="destination" required>
             <label for="comment">Комментарий:</label>
-            <textarea name="comment" id="comment" maxlength="150"></textarea>
+            <textarea name="comment" id="comment" ></textarea>
             <label>
                 <input type="checkbox" name="confirm" required> Подтверждаю транзакцию
             </label>
@@ -31,9 +31,9 @@
             <label for="edit_sum">Сумма:</label>
             <input type="number" step="0.01" name="sum" id="edit_sum" required>
             <label for="edit_destination">Кому:</label>
-            <input type="text" name="destination" id="edit_destination" maxlength="150" required>
+            <input type="text" name="destination" id="edit_destination" required>
             <label for="edit_comment">Комментарий:</label>
-            <textarea name="comment" id="edit_comment" maxlength="150"></textarea>
+            <textarea name="comment" id="edit_comment"></textarea>
             <button type="submit">Сохранить изменения</button>
         </form>
     </div>
@@ -77,7 +77,11 @@
             }
 
             if ((field === 'destination' || field === 'comment') && value.length > 150) {
-                alert(`Длина поля "${field === 'destination' ? 'Кому' : 'Комментарий'}" не должна превышать 150 символов.`);
+                alert(`Длина полей не должна превышать 150 символов.`);
+                return false;
+            }
+            if ((field === 'edit_destination' || field === 'edit_comment') && value.length > 150) {
+                alert(`Длина полей не должна превышать 150 символов.`);
                 return false;
             }
         }
