@@ -138,7 +138,7 @@ unset($_SESSION['error']);
             <input type="tel" id="phone" name="phone" required>
 
             <button type="submit">Зарегистрироваться</button>
-            <a href="login.php" class="login-link">Уже есть аккаунт? Войти</a> <!-- Кнопка для перехода на страницу входа -->
+            <a href="login.php" class="login-link">Уже есть аккаунт? Войти</a> 
         </form>
     </div>
 
