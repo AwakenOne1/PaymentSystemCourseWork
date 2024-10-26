@@ -11,12 +11,17 @@ $confirm_password = trim($_POST['confirm_password']);
 $phone = trim($_POST['phone']);
 
 // Проверка на пустые поля
-if (empty($name) && empty($login) && empty($password) && empty($confirm_password) && empty($phone)) {
+if ((empty($name) || $name == "") || empty($login) || empty($password) || empty($confirm_password) || (empty($phone) || $phone == "")) {
     $_SESSION['error'] = "Заполните все поля.";
     header("Location: registration.php");
     exit();
 }
-
+// Проверка длины пароля
+if (strlen($password) < 8) {
+    $_SESSION['error'] = "Пароль должен содержать не менее 8 символов.";
+    header("Location: registration.php");
+    exit();
+}
 // Проверка совпадения паролей
 if ($password !== $confirm_password) {
     $_SESSION['error'] = "Пароли не совпадают.";
