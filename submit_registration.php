@@ -16,12 +16,14 @@ if ((empty($name) || $name == "") || empty($login) || empty($password) || empty(
     header("Location: registration.php");
     exit();
 }
+
 // Проверка длины пароля
 if (strlen($password) < 8) {
     $_SESSION['error'] = "Пароль должен содержать не менее 8 символов.";
     header("Location: registration.php");
     exit();
 }
+
 // Проверка совпадения паролей
 if ($password !== $confirm_password) {
     $_SESSION['error'] = "Пароли не совпадают.";
@@ -36,7 +38,6 @@ $stmt->execute();
 $result = $stmt->get_result();
 
 if ($result->num_rows > 0) {
-    // Пользователь с таким email уже существует
     $_SESSION['error'] = "Пользователь с таким email уже существует.";
     header("Location: registration.php");
     exit();
@@ -46,20 +47,18 @@ if ($result->num_rows > 0) {
 $hashed_password = password_hash($password, PASSWORD_DEFAULT);
 
 // Подготовленный запрос для предотвращения SQL-инъекций
-$stmt = $conn->prepare("INSERT INTO users (name, login, password, phone) VALUES (?, ?, ?, ?)");
+$stmt = $conn->prepare("INSERT INTO users (name, login, password, phone, role) VALUES (?, ?, ?, ?, 'user')");
 $stmt->bind_param("ssss", $name, $login, $hashed_password, $phone);
 
 // Выполнение запроса
 if ($stmt->execute()) {
-    // После успешной регистрации очищаем сессию и перенаправляем на страницу входа
-    session_unset();   // Очищаем все сессионные данные
-    session_destroy(); // Уничтожаем сессию
-    header('Location: login.php'); // Перенаправляем на страницу входа
+    session_unset();
+    session_destroy();
+    header('Location: login.php');
     exit();
 } else {
     echo "Ошибка: " . $stmt->error;
 }
-
 
 // Закрытие соединения
 $stmt->close();

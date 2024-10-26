@@ -17,12 +17,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $password = $_POST['password'];
 
     // Подключение к базе данных и проверка учетных данных
-    $result = $conn->query("SELECT * FROM users WHERE login = '$login'");
+    $stmt = $conn->prepare("SELECT id, password, role FROM users WHERE login = ?");
+    $stmt->bind_param("s", $login);
+    $stmt->execute();
+    $result = $stmt->get_result();
     $user = $result->fetch_assoc();
 
     if ($user && password_verify($password, $user['password'])) {
-        // Вход успешен, сохраняем ID пользователя в сессии и перенаправляем на главную страницу
+        // Вход успешен, сохраняем ID и роль пользователя в сессии и перенаправляем на главную страницу
         $_SESSION['user_id'] = $user['id'];
+        $_SESSION['role'] = $user['role']; // Сохраняем роль в сессии
         header('Location: transactions.php');
         exit();
     } else {
@@ -30,6 +34,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $error = 'Неверный логин или пароль';
     }
 
+    $stmt->close();
     $conn->close();
 }
 ?>
