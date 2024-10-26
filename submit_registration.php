@@ -16,7 +16,12 @@ if ((empty($name) || $name == "") || empty($login) || empty($password) || empty(
     header("Location: registration.php");
     exit();
 }
-
+// Проверка длины пароля
+if (strlen($password) < 8) {
+    $_SESSION['error'] = "Пароль должен содержать не менее 8 символов.";
+    header("Location: registration.php");
+    exit();
+}
 // Проверка совпадения паролей
 if ($password !== $confirm_password) {
     $_SESSION['error'] = "Пароли не совпадают.";
