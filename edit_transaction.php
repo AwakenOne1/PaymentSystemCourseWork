@@ -25,15 +25,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_transaction'])) 
     $stmt->bind_param('dsdi', $sum, $destination, $comment, $transactionId);
 
     if ($stmt->execute()) {
+        $stmt->close(); // Закрываем соединение только при успешном выполнении запроса
         header('Location: transactions.php');
         exit();
     } else {
+        $stmt->close(); // Закрываем соединение даже при ошибке выполнения запроса
         $_SESSION['error_message'] = "Ошибка выполнения запроса: " . $stmt->error;
         header('Location: transactions.php');
         exit();
     }
-
-    $stmt->close();
 }
 $conn->close();
 ?>
