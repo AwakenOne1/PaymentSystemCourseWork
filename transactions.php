@@ -1,6 +1,22 @@
 <?php
 include 'db.php';
 session_start();
+function getTransactionChanges($transactionId, $conn)
+{
+    $sql = "SELECT Action, Changes, Timestamp FROM transaction_logs WHERE TransactionId = ?";
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("i", $transactionId);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $changes = $result->fetch_all(MYSQLI_ASSOC);
+
+    $output = '';
+    foreach ($changes as $change) {
+        $output .= $change['Action'] . ': ' . $change['Changes'] . ' (' . $change['Timestamp'] . ')<br>';
+    }
+
+    return $output;
+}
 
 if (!isset($_SESSION['user_id'])) {
     header('Location: login.php');
@@ -21,6 +37,8 @@ if (isset($_SESSION['error_message'])) {
 }
 
 $user_id = $_SESSION['user_id'];
+$user_role = $_SESSION['user_role'];
+
 $result = $conn->query("SELECT login, name FROM users WHERE Id = $user_id");
 $user = $result->fetch_assoc();
 
@@ -44,22 +62,33 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     }
 
     // Подготовка SQL-запроса
-    $sql = "SELECT * FROM transactions WHERE Sum BETWEEN ? AND ?";
+    $sql = "SELECT t.*, GROUP_CONCAT(CONCAT(tl.Action, ': ', tl.Changes, ' (', tl.Timestamp, ')') SEPARATOR '<br>') as Changes
+            FROM transactions t
+            LEFT JOIN transaction_logs tl ON t.Id = tl.TransactionId
+            WHERE t.Sum BETWEEN ? AND ? ";
     $params = [$minSum, $maxSum];
 
     if (!empty($destination)) {
-        $sql .= " AND Destination REGEXP ?";
+        $sql .= " AND t.Destination REGEXP ?";
         $params[] = $destination;
     }
 
+    // Проверка роли для выбора транзакций
+    if ($user_role === 'user') {
+        $sql .= " AND t.UserId = ?";
+        $params[] = $user_id;
+    }
+
+    $sql .= " GROUP BY t.Id";
+
     // Подготовка и выполнение запроса
     $stmt = $conn->prepare($sql);
-
-    // Генерация строки типов для bind_param
-    // 'd' - для double
     $types = 'dd'; // типы для minSum и maxSum
     if (!empty($destination)) {
         $types .= 's'; // тип для destination
+    }
+    if ($user_role !== 'admin' && $user_role !== 'moderator') {
+        $types .= 'i'; // тип для UserId
     }
 
     // Привязка параметров
@@ -69,10 +98,25 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $transactions = $result->fetch_all(MYSQLI_ASSOC);
 } else {
     // Получение всех транзакций, если поиск не выполнялся
-    $transactions_result = $conn->query("SELECT * FROM transactions");
+    if ($user_role === 'admin' || $user_role === 'moderator') {
+        $sql = "SELECT t.*, GROUP_CONCAT(CONCAT(tl.Action, ': ', tl.Changes, ' (', tl.Timestamp, ')') SEPARATOR '<br>') as Changes
+                FROM transactions t
+                LEFT JOIN transaction_logs tl ON t.Id = tl.TransactionId
+                GROUP BY t.Id";
+        $transactions_result = $conn->query($sql);
+    } else {
+        $sql = "SELECT t.*, GROUP_CONCAT(CONCAT(tl.Action, ': ', tl.Changes, ' (', tl.Timestamp, ')') SEPARATOR '<br>') as Changes
+                FROM transactions t
+                LEFT JOIN transaction_logs tl ON t.Id = tl.TransactionId
+                WHERE t.UserId = ?
+                GROUP BY t.Id";
+        $stmt = $conn->prepare($sql);
+        $stmt->bind_param('i', $user_id);
+        $stmt->execute();
+        $transactions_result = $stmt->get_result();
+    }
     $transactions = $transactions_result->fetch_all(MYSQLI_ASSOC);
 }
-
 
 // Закрытие соединения после выполнения всех запросов
 $conn->close();
@@ -227,25 +271,44 @@ $conn->close();
                 <th>Сумма</th>
                 <th>Кому</th>
                 <th>Комментарий</th>
-                <th>Действия</th>
+                <?php if ($user_role === 'admin' || $user_role === 'moderator'): ?>
+                    <th>Действия</th>
+                    <th>Изменения</th>
+                <?php endif; ?>
             </tr>
         </thead>
         <tbody>
-            <?php foreach ($transactions as $transaction): ?>
-                <tr>
-                    <td><?php echo htmlspecialchars($transaction['Id']); ?></td>
-                    <td><?php echo htmlspecialchars($transaction['Sum']); ?></td>
-                    <td><?php echo htmlspecialchars($transaction['Destination']); ?></td>
-                    <td><?php echo htmlspecialchars($transaction['Comment']); ?></td>
-                    <td>
-                        <div style="display: flex; justify-content: space-between; align-items: center;">
-                            <button class="edit-button" onclick="openEditModal(<?php echo $transaction['Id']; ?>, '<?php echo htmlspecialchars($transaction['Sum']); ?>', '<?php echo htmlspecialchars($transaction['Destination']); ?>', '<?php echo htmlspecialchars($transaction['Comment']); ?>')">Редактировать</button>
-                            <button class="delete-button" onclick="deleteTransaction(<?php echo $transaction['Id']; ?>)">Удалить</button>
+    <?php foreach ($transactions as $transaction): ?>
+        <tr>
+            <td><?php echo htmlspecialchars($transaction['Id']); ?></td>
+            <td><?php echo htmlspecialchars($transaction['Sum']); ?></td>
+            <td><?php echo htmlspecialchars($transaction['Destination']); ?></td>
+            <td><?php echo htmlspecialchars($transaction['Comment']); ?></td>
+            <?php if ($user_role === 'admin' || $user_role === 'moderator'): ?>
+            <td>
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <button class="edit-button" onclick="openEditModal(<?php echo $transaction['Id']; ?>, '<?php echo htmlspecialchars($transaction['Sum']); ?>', '<?php echo htmlspecialchars($transaction['Destination']); ?>', '<?php echo htmlspecialchars($transaction['Comment']); ?>')">Редактировать</button>
+                        <button class="delete-button" onclick="deleteTransaction(<?php echo $transaction['Id']; ?>)">Удалить</button>
+                </div>
+            </td>
+            <td>
+                <?php if (!empty($transaction['Changes'])): ?>
+                    <details>
+                        <summary>История изменений</summary>
+                        <div><?php
+                        echo $transaction['Changes'];
+                             
+                             ?>
                         </div>
-                    </td>
-                </tr>
-            <?php endforeach; ?>
-        </tbody>
+                    </details>
+                <?php else: ?>
+                    Нет изменений
+                <?php endif; ?>
+            </td>
+            <?php endif; ?>
+        </tr>
+    <?php endforeach; ?>
+</tbody>
     </table>
 
     <div class="button-container">
