@@ -14,6 +14,6 @@ if (isset($_GET['id'])) {
     $conn->query("DELETE FROM transactions WHERE Id = $transactionId");
 }
 
-header('Location: transactions.php'); // Перенаправление обратно на страницу транзакций
+header('Location: transactions.php'); 
 exit();
 ?>

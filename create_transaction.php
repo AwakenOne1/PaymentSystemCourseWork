@@ -1,5 +1,6 @@
 <?php
 include 'db.php';
+include 'log_transaction.php';  // Подключаем файл с функцией логирования
 
 session_start();
 if (!isset($_SESSION['user_id'])) {
@@ -9,9 +10,10 @@ if (!isset($_SESSION['user_id'])) {
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['create_transaction'])) {
     $sum = $_POST['sum'];
-    $destination = $_POST['destination'];
-    $comment = $_POST['comment'] ?? '';
-    $user_id = $_SESSION['user_id']; // Получаем UserId из сессии
+    $destination = trim($_POST['destination']);
+    $comment = trim($_POST['comment'] ?? '');
+    $user_id = $_SESSION['user_id'];
+    $user_role = $_SESSION['user_role'];
 
     // Проверка валидации
     if (!is_numeric($sum) || empty($destination) || strlen($destination) > 150 || strlen($comment) > 150 || $sum <= 0) {
@@ -25,15 +27,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['create_transaction'])
     $stmt->bind_param('dssi', $sum, $destination, $comment, $user_id);
 
     if ($stmt->execute()) {
-        $stmt->close(); // Закрываем соединение только при успешном выполнении запроса
+        $transactionId = $stmt->insert_id;
+        $stmt->close();
+
+        // Логирование создания транзакции
+        $changes = json_encode([
+            'sum' => $sum,
+            'destination' => $destination,
+            'comment' => $comment
+        ]);
+
+        // Вызов функции логирования
+        logTransaction($conn, $transactionId, $user_id, 'Create', $changes);
+
         header('Location: transactions.php');
         exit();
     } else {
-        $stmt->close(); // Закрываем соединение даже при ошибке выполнения запроса
+        $stmt->close();
         $_SESSION['error_message'] = "Ошибка выполнения запроса: " . $stmt->error;
         header('Location: transactions.php');
         exit();
     }
 }
+
 $conn->close();
 ?>
