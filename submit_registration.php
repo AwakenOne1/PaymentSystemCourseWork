@@ -11,7 +11,7 @@ $confirm_password = trim($_POST['confirm_password']);
 $phone = trim($_POST['phone']);
 
 // Проверка на пустые поля
-if ((empty($name) || $name == "") || empty($login) || empty($password) || empty($confirm_password) || (empty($phone) || $phone == "")) {
+if ((empty($name) || $name === "") || empty($login) || empty($password) || empty($confirm_password) || (empty($phone) || $phone == "")) {
     $_SESSION['error'] = "Заполните все поля.";
     header("Location: registration.php");
     exit();
