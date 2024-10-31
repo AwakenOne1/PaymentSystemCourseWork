@@ -273,7 +273,9 @@ $conn->close();
                 <th>Комментарий</th>
                 <?php if ($user_role === 'admin' || $user_role === 'moderator'): ?>
                     <th>Действия</th>
+                <?php if($user_role === 'admin'): ?>
                     <th>Изменения</th>
+                    <?php endif; ?>
                 <?php endif; ?>
             </tr>
         </thead>
@@ -291,6 +293,8 @@ $conn->close();
                         <button class="delete-button" onclick="deleteTransaction(<?php echo $transaction['Id']; ?>)">Удалить</button>
                 </div>
             </td>
+            <?php endif; ?>
+             <?php if ($user_role === 'admin'): ?>
             <td>
                 <?php if (!empty($transaction['Changes'])): ?>
                     <details>
