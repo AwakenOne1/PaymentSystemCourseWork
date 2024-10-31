@@ -1,27 +1,35 @@
 <?php
 include 'db.php'; // Подключаем базу данных
+session_start();
+
+if (!isset($_SESSION['user_id'])) {
+    header('Location: login.php');
+    exit();
+}
 
 // Проверяем, передан ли ID пользователя
 if (isset($_GET['id'])) {
-    $userId = intval($_GET['id']); // Получаем ID и преобразуем в целое число
+    $user_id = intval($_GET['id']);
 
-    // Запрос на удаление пользователя
+    // Удаление всех записей из transaction_logs, связанных с пользователем
+    $stmt = $conn->prepare("DELETE FROM transaction_logs WHERE UserId = ?");
+    $stmt->bind_param("i", $user_id);
+    $stmt->execute();
+    $stmt->close(); // Закрываем первый запрос
+
+    // Теперь можно удалить пользователя
     $stmt = $conn->prepare("DELETE FROM users WHERE id = ?");
-    $stmt->bind_param("i", $userId);
+    $stmt->bind_param("i", $user_id);
+    $stmt->execute();
+    $stmt->close(); // Закрываем второй запрос
 
-    if ($stmt->execute()) {
-        // Успешно удалено, перенаправляем обратно на страницу управления пользователями
-        header("Location: users.php?message=Пользователь успешно удален");
-    } else {
-        // Ошибка при удалении
-        header("Location: users.php?error=Ошибка при удалении пользователя");
-    }
-
-    $stmt->close();
 } else {
     // Если ID не передан, перенаправляем обратно с сообщением об ошибке
     header("Location: users.php?error=ID пользователя не указан");
+    exit();
 }
 
 $conn->close();
+header('Location: users.php');
+exit();
 ?>

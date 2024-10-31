@@ -136,17 +136,53 @@ $conn->close();
             margin: 0;
             padding: 0;
         }
+
         header {
             display: flex;
-            justify-content: space-between;
+            justify-content: space-between; /* Это оставит пространство между тремя основными блоками */
+            align-items: center;
             padding: 1.5em;
             background-color: #4CAF50;
             color: white;
         }
-        header a {
+
+        .header-left, .header-right {
+            display: flex;
+            align-items: center;
+        }
+
+        .user-info {
+            /* Уберите margin-right: auto; */
+        }
+
+        .nav-tabs {
+            display: flex;
+            justify-content: center; /* Центрирование вкладок */
+            flex-grow: 1; /* Позволяет занять оставшееся пространство, но мы это уберем для строгого центрирования */
+            position: absolute; /* Позиционирование относительно header */
+            left: 50%; /* Сдвиг на 50% ширины родителя */
+            transform: translateX(-50%); /* Коррекция позиции на 50% своей ширины */
+        }
+
+        .logout a {
+            text-decoration: none;
+            color: white;
+        }
+
+            .logout a:hover {
+                text-decoration: underline;
+                color: white;
+            }
+
+        .nav-tabs a {
             color: white;
             text-decoration: none;
+            padding: 0 1em;
         }
+
+            .nav-tabs a:hover {
+                text-decoration: underline;
+            }
         main {
             padding: 2em;
             display: flex;
@@ -257,8 +293,18 @@ $conn->close();
 <body>
 
 <header>
-    <div><?php echo htmlspecialchars($user['login']); ?> (<?php echo htmlspecialchars($user['name']); ?>)</div>
-    <div><a href="?action=logout">Выйти</a></div>
+    <div class="header-left">
+        <div class="user-info"><?php echo htmlspecialchars($user['login']); ?> (<?php echo htmlspecialchars($user['name']); ?>)</div>
+    </div>
+    <nav class="nav-tabs">
+        <a href="transactions.php">Транзакции</a>
+        <?php if ($user_role === 'admin' || $user_role === 'moderator'): ?>
+            <a href="users.php">Пользователи</a>
+        <?php endif; ?>
+    </nav>
+    <div class="header-right">
+        <div class="logout"><a href="?action=logout">Выйти</a></div>
+    </div>
 </header>
 
 <main>
@@ -299,6 +345,7 @@ $conn->close();
                 <?php if (!empty($transaction['Changes'])): ?>
                     <details>
                         <summary>История изменений</summary>
+                        
                         <div><?php
                         echo $transaction['Changes'];
                              
