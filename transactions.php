@@ -100,7 +100,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     // Получение всех транзакций, если поиск не выполнялся
     if ($user_role === 'admin' || $user_role === 'moderator') {
         $sql = "SELECT t.*, 
-                       GROUP_CONCAT(CONCAT(u.Id, ': ', u.Role, ' изменил: ', tl.Action, ': ', tl.Changes, ' (', tl.Timestamp, ')') SEPARATOR '<br>') as Changes
+                       GROUP_CONCAT(CONCAT(u.Id, ' (', u.Role, ') ', tl.Action, ' - ', tl.Timestamp, ': ', tl.Changes) SEPARATOR '<br>') as Changes
                 FROM transactions t
                 LEFT JOIN transaction_logs tl ON t.Id = tl.TransactionId
                 LEFT JOIN users u ON tl.UserId = u.Id
@@ -108,7 +108,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $transactions_result = $conn->query($sql);
     } else {
         $sql = "SELECT t.*, 
-                       GROUP_CONCAT(CONCAT(u.Id, ': ', u.Role, ' изменил: ', tl.Action, ': ', tl.Changes, ' (', tl.Timestamp, ')') SEPARATOR '<br>') as Changes
+                       GROUP_CONCAT(CONCAT(u.Id, ' (', u.Role, ') ', tl.Action, ' - ', tl.Timestamp, ': ', tl.Changes) SEPARATOR '<br>') as Changes
                 FROM transactions t
                 LEFT JOIN transaction_logs tl ON t.Id = tl.TransactionId
                 LEFT JOIN users u ON tl.UserId = u.Id
@@ -329,12 +329,13 @@ $conn->close();
             </tr>
         </thead>
         <tbody>
-   <?php foreach ($transactions as $transaction): ?>
+  <?php foreach ($transactions as $transaction): ?>
 <tr>
     <td><?php echo htmlspecialchars($transaction['Id']); ?></td>
     <td><?php echo htmlspecialchars($transaction['Sum']); ?></td>
     <td><?php echo htmlspecialchars($transaction['Destination']); ?></td>
     <td><?php echo htmlspecialchars($transaction['Comment']); ?></td>
+
     <?php if ($user_role === 'admin' || $user_role === 'moderator'): ?>
     <td>
         <div style="display: flex; justify-content: space-between; align-items: center;">
@@ -343,6 +344,7 @@ $conn->close();
         </div>
     </td>
     <?php endif; ?>
+
     <?php if ($user_role === 'admin'): ?>
     <td>
         <?php if (!empty($transaction['Changes'])): ?>
