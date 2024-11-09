@@ -1,37 +1,7 @@
-<?php
-include 'db.php';
-
-// Проверка, если пользователь уже вошел в систему, перенаправляем на главную страницу
-if (session_status() == PHP_SESSION_NONE) {
-    session_start();
-}
-
-if (isset($_SESSION['user_id'])) {
-    header('Location: transactions.php');
-    exit();
-}
-
-// Обработка формы входа
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $login = $_POST['login'];
-    $password = $_POST['password'];
-
-    // Подключение к базе данных и проверка учетных данных
-    $result = $conn->query("SELECT * FROM users WHERE login = '$login'");
-    $user = $result->fetch_assoc();
-
-    if ($user && password_verify($password, $user['password'])) {
-        // Вход успешен, сохраняем ID пользователя в сессии и перенаправляем на главную страницу
-        $_SESSION['user_id'] = $user['id'];
-        header('Location: transactions.php');
-        exit();
-    } else {
-        // Неверные учетные данные, отображаем сообщение об ошибке
-        $error = 'Неверный логин или пароль';
-    }
-
-    $conn->close();
-}
+ <?php
+session_start();
+$error = isset($_SESSION['error']) ? $_SESSION['error'] : '';
+unset($_SESSION['error']);
 ?>
 
 <!DOCTYPE html>
@@ -39,7 +9,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Вход</title>
+    <title>Регистрация</title>
     <link rel="stylesheet" href="static.css">
     <style>
         body {
@@ -53,7 +23,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         .container {
             max-width: 400px;
-            width: 100%;
+            width: 100%; /* Адаптивная ширина */
             padding: 20px;
             background-color: #fff;
             border-radius: 8px;
@@ -72,7 +42,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         input[type="text"],
-        input[type="password"] {
+        input[type="email"],
+        input[type="password"],
+        input[type="tel"] {
             width: calc(100% - 20px); /* Учитываем отступы */
             padding: 10px;
             margin-bottom: 15px;
@@ -87,14 +59,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             border: none;
             border-radius: 4px;
             cursor: pointer;
-            width: 100%;
+            width: 100%; /* Полная ширина кнопки */
+            margin-bottom: 10px; /* Отступ между кнопками */
         }
 
         button:hover {
             background-color: #45a049;
         }
 
-        .register-link {
+        .login-link {
             display: block;
             text-align: center;
             color: #007bff; /* Цвет текста для ссылки */
@@ -102,7 +75,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             margin-top: 10px; /* Отступ сверху */
         }
 
-        .register-link:hover {
+        .login-link:hover {
             text-decoration: underline; /* Подчеркивание при наведении */
         }
 
@@ -147,29 +120,40 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 </head>
 <body>
     <div class="container">
-        <h1>Вход</h1>
-        <form method="POST">
-            <label for="login">Логин:</label>
-            <input type="text" id="login" name="login" required>
+        <h1>Регистрация</h1>
+        <form action="submit_registration.php" method="POST">
+            <label for="name">ФИО:</label>
+            <input type="text" id="name" name="name" required>
+
+            <label for="email">Email:</label>
+            <input type="email" id="email" name="email" required>
 
             <label for="password">Пароль:</label>
             <input type="password" id="password" name="password" required>
 
-            <button type="submit">Войти</button>
-            <a href="registration.php" class="register-link">Зарегистрироваться</a> <!-- Ссылка на регистрацию -->
+            <label for="confirm_password">Подтверждение пароля:</label>
+            <input type="password" id="confirm_password" name="confirm_password" required>
+
+            <label for="phone">Телефон:</label>
+            <input type="tel" id="phone" name="phone" required>
+
+            <button type="submit">Зарегистрироваться</button>
+            <a href="login.php" class="login-link">Уже есть аккаунт? Войти</a> 
         </form>
     </div>
 
-    <div id="errorModal" class="modal">
+<div id="errorModal" class="modal">
         <div class="modal-content">
             <span class="close">&times;</span>
-            <p id="errorMessage"><?php echo isset($error) ? $error : ''; ?></p>
+            <p id="errorMessage"></p>
         </div>
     </div>
+
     <script>
         window.onload = function() {
-            var error = "<?php echo isset($error) ? $error : ''; ?>";
+            var error = "<?php echo $error; ?>";
             if (error) {
+                document.getElementById('errorMessage').innerHTML = error;
                 document.getElementById('errorModal').style.display = 'block';
             }
         };
