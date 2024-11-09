@@ -1,6 +1,22 @@
 <?php
 include 'db.php';
 session_start();
+function getTransactionChanges($transactionId, $conn)
+{
+    $sql = "SELECT Action, Changes, Timestamp FROM transaction_logs WHERE TransactionId = ?";
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("i", $transactionId);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $changes = $result->fetch_all(MYSQLI_ASSOC);
+
+    $output = '';
+    foreach ($changes as $change) {
+        $output .= $change['Action'] . ': ' . $change['Changes'] . ' (' . $change['Timestamp'] . ')<br>';
+    }
+
+    return $output;
+}
 
 if (!isset($_SESSION['user_id'])) {
     header('Location: login.php');
@@ -21,6 +37,8 @@ if (isset($_SESSION['error_message'])) {
 }
 
 $user_id = $_SESSION['user_id'];
+$user_role = $_SESSION['user_role'];
+
 $result = $conn->query("SELECT login, name FROM users WHERE Id = $user_id");
 $user = $result->fetch_assoc();
 
@@ -44,22 +62,33 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     }
 
     // Подготовка SQL-запроса
-    $sql = "SELECT * FROM transactions WHERE Sum BETWEEN ? AND ?";
+    $sql = "SELECT t.*, GROUP_CONCAT(CONCAT(tl.Action, ': ', tl.Changes, ' (', tl.Timestamp, ')') SEPARATOR '<br>') as Changes
+            FROM transactions t
+            LEFT JOIN transaction_logs tl ON t.Id = tl.TransactionId
+            WHERE t.Sum BETWEEN ? AND ? ";
     $params = [$minSum, $maxSum];
 
     if (!empty($destination)) {
-        $sql .= " AND Destination REGEXP ?";
+        $sql .= " AND t.Destination REGEXP ?";
         $params[] = $destination;
     }
 
+    // Проверка роли для выбора транзакций
+    if ($user_role === 'user') {
+        $sql .= " AND t.UserId = ?";
+        $params[] = $user_id;
+    }
+
+    $sql .= " GROUP BY t.Id";
+
     // Подготовка и выполнение запроса
     $stmt = $conn->prepare($sql);
-
-    // Генерация строки типов для bind_param
-    // 'd' - для double
     $types = 'dd'; // типы для minSum и maxSum
     if (!empty($destination)) {
         $types .= 's'; // тип для destination
+    }
+    if ($user_role !== 'admin' && $user_role !== 'moderator') {
+        $types .= 'i'; // тип для UserId
     }
 
     // Привязка параметров
@@ -69,11 +98,29 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $transactions = $result->fetch_all(MYSQLI_ASSOC);
 } else {
     // Получение всех транзакций, если поиск не выполнялся
-    $transactions_result = $conn->query("SELECT * FROM transactions");
+    if ($user_role === 'admin' || $user_role === 'moderator') {
+        $sql = "SELECT t.*, 
+                       GROUP_CONCAT(CONCAT(u.Id, ' (', u.Role, ') ', tl.Action, ' - ', tl.Timestamp, ': ', tl.Changes) SEPARATOR '<br>') as Changes
+                FROM transactions t
+                LEFT JOIN transaction_logs tl ON t.Id = tl.TransactionId
+                LEFT JOIN users u ON tl.UserId = u.Id
+                GROUP BY t.Id";
+        $transactions_result = $conn->query($sql);
+    } else {
+        $sql = "SELECT t.*, 
+                       GROUP_CONCAT(CONCAT(u.Id, ' (', u.Role, ') ', tl.Action, ' - ', tl.Timestamp, ': ', tl.Changes) SEPARATOR '<br>') as Changes
+                FROM transactions t
+                LEFT JOIN transaction_logs tl ON t.Id = tl.TransactionId
+                LEFT JOIN users u ON tl.UserId = u.Id
+                WHERE t.UserId = ?
+                GROUP BY t.Id";
+        $stmt = $conn->prepare($sql);
+        $stmt->bind_param('i', $user_id);
+        $stmt->execute();
+        $transactions_result = $stmt->get_result();
+    }
     $transactions = $transactions_result->fetch_all(MYSQLI_ASSOC);
 }
-
-
 // Закрытие соединения после выполнения всех запросов
 $conn->close();
 ?>
@@ -92,17 +139,53 @@ $conn->close();
             margin: 0;
             padding: 0;
         }
+
         header {
             display: flex;
-            justify-content: space-between;
+            justify-content: space-between; /* Это оставит пространство между тремя основными блоками */
+            align-items: center;
             padding: 1.5em;
             background-color: #4CAF50;
             color: white;
         }
-        header a {
+
+        .header-left, .header-right {
+            display: flex;
+            align-items: center;
+        }
+
+        .user-info {
+            /* Уберите margin-right: auto; */
+        }
+
+        .nav-tabs {
+            display: flex;
+            justify-content: center; /* Центрирование вкладок */
+            flex-grow: 1; /* Позволяет занять оставшееся пространство, но мы это уберем для строгого центрирования */
+            position: absolute; /* Позиционирование относительно header */
+            left: 50%; /* Сдвиг на 50% ширины родителя */
+            transform: translateX(-50%); /* Коррекция позиции на 50% своей ширины */
+        }
+
+        .logout a {
+            text-decoration: none;
+            color: white;
+        }
+
+            .logout a:hover {
+                text-decoration: underline;
+                color: white;
+            }
+
+        .nav-tabs a {
             color: white;
             text-decoration: none;
+            padding: 0 1em;
         }
+
+            .nav-tabs a:hover {
+                text-decoration: underline;
+            }
         main {
             padding: 2em;
             display: flex;
@@ -213,8 +296,18 @@ $conn->close();
 <body>
 
 <header>
-    <div><?php echo htmlspecialchars($user['login']); ?> (<?php echo htmlspecialchars($user['name']); ?>)</div>
-    <div><a href="?action=logout">Выйти</a></div>
+    <div class="header-left">
+        <div class="user-info"><?php echo htmlspecialchars($user['login']); ?> (<?php echo htmlspecialchars($user['name']); ?>)</div>
+    </div>
+    <nav class="nav-tabs">
+        <a href="transactions.php">Транзакции</a>
+        <?php if ($user_role === 'admin' || $user_role === 'moderator'): ?>
+            <a href="users.php">Пользователи</a>
+        <?php endif; ?>
+    </nav>
+    <div class="header-right">
+        <div class="logout"><a href="?action=logout">Выйти</a></div>
+    </div>
 </header>
 
 <main>
@@ -227,25 +320,46 @@ $conn->close();
                 <th>Сумма</th>
                 <th>Кому</th>
                 <th>Комментарий</th>
-                <th>Действия</th>
+                <?php if ($user_role === 'admin' || $user_role === 'moderator'): ?>
+                    <th>Действия</th>
+                <?php if($user_role === 'admin'): ?>
+                    <th>Изменения</th>
+                    <?php endif; ?>
+                <?php endif; ?>
             </tr>
         </thead>
         <tbody>
-            <?php foreach ($transactions as $transaction): ?>
-                <tr>
-                    <td><?php echo htmlspecialchars($transaction['Id']); ?></td>
-                    <td><?php echo htmlspecialchars($transaction['Sum']); ?></td>
-                    <td><?php echo htmlspecialchars($transaction['Destination']); ?></td>
-                    <td><?php echo htmlspecialchars($transaction['Comment']); ?></td>
-                    <td>
-                        <div style="display: flex; justify-content: space-between; align-items: center;">
-                            <button class="edit-button" onclick="openEditModal(<?php echo $transaction['Id']; ?>, '<?php echo htmlspecialchars($transaction['Sum']); ?>', '<?php echo htmlspecialchars($transaction['Destination']); ?>', '<?php echo htmlspecialchars($transaction['Comment']); ?>')">Редактировать</button>
-                            <button class="delete-button" onclick="deleteTransaction(<?php echo $transaction['Id']; ?>)">Удалить</button>
-                        </div>
-                    </td>
-                </tr>
-            <?php endforeach; ?>
-        </tbody>
+  <?php foreach ($transactions as $transaction): ?>
+<tr>
+    <td><?php echo htmlspecialchars($transaction['Id']); ?></td>
+    <td><?php echo htmlspecialchars($transaction['Sum']); ?></td>
+    <td><?php echo htmlspecialchars($transaction['Destination']); ?></td>
+    <td><?php echo htmlspecialchars($transaction['Comment']); ?></td>
+
+    <?php if ($user_role === 'admin' || $user_role === 'moderator'): ?>
+    <td>
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <button class="edit-button" onclick="openEditModal(<?php echo $transaction['Id']; ?>, '<?php echo htmlspecialchars($transaction['Sum']); ?>', '<?php echo htmlspecialchars($transaction['Destination']); ?>', '<?php echo htmlspecialchars($transaction['Comment']); ?>')">Редактировать</button>
+            <button class="delete-button" onclick="deleteTransaction(<?php echo $transaction['Id']; ?>)">Удалить</button>
+        </div>
+    </td>
+    <?php endif; ?>
+
+    <?php if ($user_role === 'admin'): ?>
+    <td>
+        <?php if (!empty($transaction['Changes'])): ?>
+            <details>
+                <summary>История изменений</summary>
+                <div><?php echo $transaction['Changes']; ?></div>
+            </details>
+        <?php else: ?>
+            Нет изменений
+        <?php endif; ?>
+    </td>
+    <?php endif; ?>
+</tr>
+<?php endforeach; ?>
+</tbody>
     </table>
 
     <div class="button-container">
