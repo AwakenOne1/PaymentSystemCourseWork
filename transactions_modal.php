@@ -47,15 +47,17 @@
 
             <label for="edit_comment">Комментарий:</label>
             <textarea name="comment" id="edit_comment"></textarea>
+<?php if ($user_role === 'admin'): ?>
+    <label for="payment_system">Платежная система:</label>
+    <select name="payment_system_id" id="payment_system" required>
+        <?php foreach ($payment_systems as $system): ?>
+            <option value="<?php echo $system['Id']; ?>" id="payment_system_<?php echo $system['Id']; ?>">
+                <?php echo htmlspecialchars($system['Name']); ?>
+            </option>
+        <?php endforeach; ?>
+    </select>
+<?php endif; ?>
 
-            <label for="payment_system">Платежная система:</label>
-             <select name="payment_system_id" id="payment_system" <?php echo ($user_role === 'moderator') ? 'disabled' : ''; ?> required>
-                <?php foreach ($payment_systems as $system): ?>
-                    <option value="<?php echo $system['Id']; ?>" id="payment_system_<?php echo $system['Id']; ?>">
-                        <?php echo htmlspecialchars($system['Name']); ?>
-                    </option>
-                <?php endforeach; ?>
-            </select>
 
             <label for="edit_status">Статус:</label>
             <select name="status" id="edit_status" required>

@@ -57,64 +57,49 @@ $maxSum = 99999999999.99;
 $destination = '';
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    // Проверка на сброс формы
     if (isset($_POST['resetSearch']) && $_POST['resetSearch'] === '1') {
-        // Если форма сброшена, устанавливаем значения по умолчанию
         $minSum = 0.00;
         $maxSum = 99999999999.99;
         $destination = '';
     } else {
-        // Иначе обрабатываем значения с формы
         $minSum = number_format((float) $_POST['minSum'], 2, '.', '');
         $maxSum = number_format((float) $_POST['maxSum'], 2, '.', '');
         $destination = $_POST['destination'];
     }
 
-    // Подготовка SQL-запроса
     $sql = "SELECT t.*, 
                ps.Name AS PaymentSystems, 
                t.Status, 
                GROUP_CONCAT(CONCAT(tl.Action, ': ', tl.Changes, ' (', tl.Timestamp, ')') SEPARATOR '<br>') AS Changes
         FROM transactions t
         LEFT JOIN transaction_logs tl ON t.Id = tl.TransactionId
-        LEFT JOIN payment_systems ps ON t.Payment_System_Id = ps.Id
+        LEFT JOIN paymentsystems ps ON t.Payment_System_Id = ps.Id
         WHERE t.Sum BETWEEN ? AND ?";
 
     $params = [$minSum, $maxSum];
+    $types = 'dd'; // Типы для $minSum и $maxSum
 
     if (!empty($destination)) {
         $sql .= " AND t.Destination REGEXP ?";
         $params[] = $destination;
+        $types .= 's'; // Тип для $destination
     }
 
-    // Проверка роли для выбора транзакций
     if ($user_role === 'user') {
         $sql .= " AND t.UserId = ?";
         $params[] = $user_id;
+        $types .= 'i'; // Тип для $user_id
     }
 
-    // Если модератор, фильтруем транзакции по платежной системе
     if ($user_role === 'moderator') {
         $sql .= " AND t.Payment_System_Id = ?";
-        $params[] = $user['payment_system_id'];  // Используем payment_system_id текущего пользователя
+        $params[] = $user['payment_system_id'];
+        $types .= 'i'; // Тип для $payment_system_id
     }
 
     $sql .= " GROUP BY t.Id";
 
-    // Подготовка и выполнение запроса
     $stmt = $conn->prepare($sql);
-    $types = 'dd'; // типы для minSum и maxSum
-    if (!empty($destination)) {
-        $types .= 's'; // тип для destination
-    }
-    if ($user_role !== 'admin') {
-        $types .= 'i'; // тип для UserId
-    }
-    if ($user_role === 'moderator') {
-        $types .= 'i'; // тип для PaymentSystemId
-    }
-
-    // Привязка параметров
     $stmt->bind_param($types, ...$params);
     $stmt->execute();
     $result = $stmt->get_result();
@@ -429,14 +414,21 @@ $conn->close();
         function closeSearchModal() {
             document.getElementById('searchModal').style.display = 'none';
         }
-
-        function openEditModal(id, sum, destination, comment) {
-            document.getElementById('transaction_id').value = id;
+        function openEditModal(transactionId, sum, destination, comment, status, paymentSystemId) {
+            document.getElementById('transaction_id').value = transactionId;
             document.getElementById('edit_sum').value = sum;
             document.getElementById('edit_destination').value = destination;
             document.getElementById('edit_comment').value = comment;
+            document.getElementById('edit_status').value = status;
+
+            const paymentSystemField = document.getElementById('payment_system');
+            if (paymentSystemField) {
+                paymentSystemField.value = paymentSystemId;
+            }
+
             document.getElementById('editModal').style.display = 'flex';
         }
+
 
         function closeEditModal() {
             document.getElementById('editModal').style.display = 'none';
