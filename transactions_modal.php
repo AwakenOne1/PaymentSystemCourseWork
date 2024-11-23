@@ -49,7 +49,7 @@
             <textarea name="comment" id="edit_comment"></textarea>
 
             <label for="payment_system">Платежная система:</label>
-            <select name="payment_system_id" id="payment_system" required>
+             <select name="payment_system_id" id="payment_system" <?php echo ($user_role === 'moderator') ? 'disabled' : ''; ?> required>
                 <?php foreach ($payment_systems as $system): ?>
                     <option value="<?php echo $system['Id']; ?>" id="payment_system_<?php echo $system['Id']; ?>">
                         <?php echo htmlspecialchars($system['Name']); ?>
