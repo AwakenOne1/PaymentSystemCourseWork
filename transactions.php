@@ -39,8 +39,17 @@ if (isset($_SESSION['error_message'])) {
 $user_id = $_SESSION['user_id'];
 $user_role = $_SESSION['user_role'];
 
-$result = $conn->query("SELECT login, name FROM users WHERE Id = $user_id");
+$result = $conn->query("SELECT login, name, payment_system_id FROM users WHERE Id = $user_id");
 $user = $result->fetch_assoc();
+
+// Получаем список платежных систем
+$systems_result = $conn->query("SELECT Id, Name FROM paymentsystems");
+$payment_systems = [];
+while ($system = $systems_result->fetch_assoc()) {
+    $payment_systems[] = $system;
+}
+
+$_SESSION['paymentsystems'] = $payment_systems;
 
 // Обработка поиска
 $minSum = 0.00;
@@ -62,10 +71,15 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     }
 
     // Подготовка SQL-запроса
-    $sql = "SELECT t.*, GROUP_CONCAT(CONCAT(tl.Action, ': ', tl.Changes, ' (', tl.Timestamp, ')') SEPARATOR '<br>') as Changes
-            FROM transactions t
-            LEFT JOIN transaction_logs tl ON t.Id = tl.TransactionId
-            WHERE t.Sum BETWEEN ? AND ? ";
+    $sql = "SELECT t.*, 
+               ps.Name AS PaymentSystems, 
+               t.Status, 
+               GROUP_CONCAT(CONCAT(tl.Action, ': ', tl.Changes, ' (', tl.Timestamp, ')') SEPARATOR '<br>') AS Changes
+        FROM transactions t
+        LEFT JOIN transaction_logs tl ON t.Id = tl.TransactionId
+        LEFT JOIN payment_systems ps ON t.Payment_System_Id = ps.Id
+        WHERE t.Sum BETWEEN ? AND ?";
+
     $params = [$minSum, $maxSum];
 
     if (!empty($destination)) {
@@ -79,6 +93,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $params[] = $user_id;
     }
 
+    // Если модератор, фильтруем транзакции по платежной системе
+    if ($user_role === 'moderator') {
+        $sql .= " AND t.Payment_System_Id = ?";
+        $params[] = $user['payment_system_id'];  // Используем payment_system_id текущего пользователя
+    }
+
     $sql .= " GROUP BY t.Id";
 
     // Подготовка и выполнение запроса
@@ -87,8 +107,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     if (!empty($destination)) {
         $types .= 's'; // тип для destination
     }
-    if ($user_role !== 'admin' && $user_role !== 'moderator') {
+    if ($user_role !== 'admin') {
         $types .= 'i'; // тип для UserId
+    }
+    if ($user_role === 'moderator') {
+        $types .= 'i'; // тип для PaymentSystemId
     }
 
     // Привязка параметров
@@ -98,7 +121,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $transactions = $result->fetch_all(MYSQLI_ASSOC);
 } else {
     // Получение всех транзакций, если поиск не выполнялся
-    if ($user_role === 'admin' || $user_role === 'moderator') {
+    if ($user_role === 'admin') {
         $sql = "SELECT t.*, 
                        GROUP_CONCAT(CONCAT(u.Id, ' (', u.Role, ') ', tl.Action, ' - ', tl.Timestamp, ': ', tl.Changes) SEPARATOR '<br>') as Changes
                 FROM transactions t
@@ -106,6 +129,18 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 LEFT JOIN users u ON tl.UserId = u.Id
                 GROUP BY t.Id";
         $transactions_result = $conn->query($sql);
+    } elseif ($user_role === 'moderator') {
+        $sql = "SELECT t.*, 
+                       GROUP_CONCAT(CONCAT(u.Id, ' (', u.Role, ') ', tl.Action, ' - ', tl.Timestamp, ': ', tl.Changes) SEPARATOR '<br>') as Changes
+                FROM transactions t
+                LEFT JOIN transaction_logs tl ON t.Id = tl.TransactionId
+                LEFT JOIN users u ON tl.UserId = u.Id
+                WHERE t.Payment_System_Id = ?
+                GROUP BY t.Id";
+        $stmt = $conn->prepare($sql);
+        $stmt->bind_param('i', $user['payment_system_id']);  // Используем payment_system_id текущего пользователя
+        $stmt->execute();
+        $transactions_result = $stmt->get_result();
     } else {
         $sql = "SELECT t.*, 
                        GROUP_CONCAT(CONCAT(u.Id, ' (', u.Role, ') ', tl.Action, ' - ', tl.Timestamp, ': ', tl.Changes) SEPARATOR '<br>') as Changes
@@ -124,6 +159,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 // Закрытие соединения после выполнения всех запросов
 $conn->close();
 ?>
+
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -314,53 +350,57 @@ $conn->close();
     <h1>Ваши транзакции</h1>
     
     <table>
-        <thead>
+       <thead>
             <tr>
                 <th>ID</th>
                 <th>Сумма</th>
                 <th>Кому</th>
                 <th>Комментарий</th>
+                <th>Платежная система</th>
+                <th>Статус</th>
                 <?php if ($user_role === 'admin' || $user_role === 'moderator'): ?>
                     <th>Действия</th>
-                <?php if($user_role === 'admin'): ?>
-                    <th>Изменения</th>
+                    <?php if ($user_role === 'admin'): ?>
+                        <th>Изменения</th>
                     <?php endif; ?>
                 <?php endif; ?>
             </tr>
         </thead>
         <tbody>
-  <?php foreach ($transactions as $transaction): ?>
-<tr>
-    <td><?php echo htmlspecialchars($transaction['Id']); ?></td>
-    <td><?php echo htmlspecialchars($transaction['Sum']); ?></td>
-    <td><?php echo htmlspecialchars($transaction['Destination']); ?></td>
-    <td><?php echo htmlspecialchars($transaction['Comment']); ?></td>
+            <?php foreach ($transactions as $transaction): ?>
+                <tr>
+                    <td><?php echo htmlspecialchars($transaction['Id']); ?></td>
+                    <td><?php echo htmlspecialchars($transaction['Sum']); ?></td>
+                    <td><?php echo htmlspecialchars($transaction['Destination']); ?></td>
+                    <td><?php echo htmlspecialchars($transaction['Comment']); ?></td>
+                    <td><?php echo htmlspecialchars($transaction['payment_system_id']); ?></td>
+                    <td><?php echo htmlspecialchars($transaction['status']); ?></td>
+                    <?php if ($user_role === 'admin' || $user_role === 'moderator'): ?>
+                        <td>
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <button class="edit-button" onclick="openEditModal(<?php echo $transaction['Id']; ?>, '<?php echo htmlspecialchars($transaction['Sum']); ?>', '<?php echo htmlspecialchars($transaction['Destination']); ?>', '<?php echo htmlspecialchars($transaction['Comment']); ?>')">Редактировать</button>
+                                <button class="delete-button" onclick="deleteTransaction(<?php echo $transaction['Id']; ?>)">Удалить</button>
+                            </div>
+                        </td>
+                    <?php endif; ?>
+                    <?php if ($user_role === 'admin'): ?>
+                    <td>
+                        <?php if (!empty($transaction['Changes'])): ?>
+                            <details>
+                                <summary>История изменений</summary>
+                                <div><?php echo $transaction['Changes']; ?></div>
+                            </details>
+                        <?php else: ?>
+                            Нет изменений
+                        <?php endif; ?>
+                    </td>
+                    <?php endif; ?>
+                </tr>
 
-    <?php if ($user_role === 'admin' || $user_role === 'moderator'): ?>
-    <td>
-        <div style="display: flex; justify-content: space-between; align-items: center;">
-            <button class="edit-button" onclick="openEditModal(<?php echo $transaction['Id']; ?>, '<?php echo htmlspecialchars($transaction['Sum']); ?>', '<?php echo htmlspecialchars($transaction['Destination']); ?>', '<?php echo htmlspecialchars($transaction['Comment']); ?>')">Редактировать</button>
-            <button class="delete-button" onclick="deleteTransaction(<?php echo $transaction['Id']; ?>)">Удалить</button>
-        </div>
-    </td>
-    <?php endif; ?>
+            <?php endforeach; ?>
+        </tbody>
 
-    <?php if ($user_role === 'admin'): ?>
-    <td>
-        <?php if (!empty($transaction['Changes'])): ?>
-            <details>
-                <summary>История изменений</summary>
-                <div><?php echo $transaction['Changes']; ?></div>
-            </details>
-        <?php else: ?>
-            Нет изменений
-        <?php endif; ?>
-    </td>
-    <?php endif; ?>
-</tr>
-<?php endforeach; ?>
-</tbody>
-    </table>
+</table>
 
     <div class="button-container">
         <button class="search-button" onclick="openSearchModal()">Поиск по критериям</button>
@@ -368,53 +408,54 @@ $conn->close();
     </div>
 </main>
 
-<?php include 'transactions_modal.php'; ?>
+    <?php include 'transactions_modal.php'; ?>
 
-<script>
-    function openCreateModal() {
-        document.getElementById('createModal').style.display = 'flex';
-    }
-
-    function closeCreateModal() {
-        document.getElementById('createModal').style.display = 'none';
-    }
-
-    function openSearchModal() {
-        document.getElementById('searchModal').style.display = 'flex';
-    }
-
-    function closeSearchModal() {
-        document.getElementById('searchModal').style.display = 'none';
-    }
-
-    function openEditModal(id, sum, destination, comment) {
-        document.getElementById('transaction_id').value = id;
-        document.getElementById('edit_sum').value = sum;
-        document.getElementById('edit_destination').value = destination;
-        document.getElementById('edit_comment').value = comment;
-        document.getElementById('editModal').style.display = 'flex';
-    }
-
-    function closeEditModal() {
-        document.getElementById('editModal').style.display = 'none';
-    }
-
-    function deleteTransaction(id) {
-        if (confirm('Вы уверены, что хотите удалить эту транзакцию?')) {
-            window.location.href = 'delete_transaction.php?id=' + id;
+    <script>
+        function openCreateModal() {
+             console.log('openCreateModal вызвана');
+            document.getElementById('createModal').style.display = 'flex';
         }
-    }
+
+        function closeCreateModal() {
+            document.getElementById('createModal').style.display = 'none';
+        }
+
+        function openSearchModal() {
+            document.getElementById('searchModal').style.display = 'flex';
+        }
+
+        function closeSearchModal() {
+            document.getElementById('searchModal').style.display = 'none';
+        }
+
+        function openEditModal(id, sum, destination, comment) {
+            document.getElementById('transaction_id').value = id;
+            document.getElementById('edit_sum').value = sum;
+            document.getElementById('edit_destination').value = destination;
+            document.getElementById('edit_comment').value = comment;
+            document.getElementById('editModal').style.display = 'flex';
+        }
+
+        function closeEditModal() {
+            document.getElementById('editModal').style.display = 'none';
+        }
+
+        function deleteTransaction(id) {
+            if (confirm('Вы уверены, что хотите удалить эту транзакцию?')) {
+                window.location.href = 'delete_transaction.php?id=' + id;
+            }
+        }
     
-    window.onclick = function(event) {
-        if (event.target == document.getElementById('createModal')) {
-            closeCreateModal();
-        } else if (event.target == document.getElementById('searchModal')) {
-            closeSearchModal();
-        } else if (event.target == document.getElementById('editModal')) {
-            closeEditModal();
-        }
-    };
-</script>
+        window.onclick = function(event) {
+            if (event.target == document.getElementById('createModal')) {
+                closeCreateModal();
+            } else if (event.target == document.getElementById('searchModal')) {
+                closeSearchModal();
+            } else if (event.target == document.getElementById('editModal')) {
+                closeEditModal();
+            }
+        };
+    </script>
 
 </body>
 </html>

@@ -30,8 +30,10 @@
  }
 
  // Подключение к базе данных и получение данных из таблицы users
- $result = $conn->query("SELECT * FROM users");
+ $result = $conn->query("SELECT users.*, paymentsystems.name AS payment_system_name FROM users
+                        LEFT JOIN paymentsystems ON users.payment_system_id = paymentsystems.id");
  $users = $result->fetch_all(MYSQLI_ASSOC);
+
 
  $conn->close();
  ?>
@@ -225,16 +227,17 @@
     <h1>Список пользователей</h1>
 <table>
     <thead>
-        <tr>
-            <th>ID</th>
-            <th>Имя</th>
-            <th>Логин</th>
-            <th>Телефон</th>
-            <th>Роль</th>
-            <?php if($user_role === 'admin'): ?>
-                <th>Действия</th>
-            <?php endif; ?>
-        </tr>
+    <tr>
+        <th>ID</th>
+        <th>Имя</th>
+        <th>Логин</th>
+        <th>Телефон</th>
+        <th>Роль</th>
+        <th>Платежная система</th> <!-- Новая колонка -->
+        <?php if ($user_role === 'admin'): ?>
+            <th>Действия</th>
+        <?php endif; ?>
+    </tr>
     </thead>
     <tbody>
         <?php foreach ($users as $user): ?>
@@ -244,24 +247,27 @@
                 <td><?php echo htmlspecialchars($user['login']); ?></td>
                 <td><?php echo htmlspecialchars($user['phone']); ?></td>
                 <td><?php echo htmlspecialchars($user['role']); ?></td>
+                <td><?php echo htmlspecialchars($user['payment_system_name']); ?></td> <!-- Отображение имени платежной системы -->
                 <?php if ($user_role === 'admin' && htmlspecialchars($user['role']) !== UserRole::ADMIN): ?>
-                <td>
-                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <td>
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
                             <button class="edit-button" onclick="openEditModal(
                                  <?php echo htmlspecialchars($user['id']); ?>,
                                 '<?php echo htmlspecialchars($user['name']); ?>',
                                 '<?php echo htmlspecialchars($user['login']); ?>',
                                 '<?php echo htmlspecialchars($user['phone']); ?>',
-                                '<?php echo htmlspecialchars($user['role']); ?>')">Редактировать</button>
+                                '<?php echo htmlspecialchars($user['role']); ?>',
+                                '<?php echo htmlspecialchars($user['payment_system_id']); ?>')">Редактировать</button>
                             <button class="delete-button" onclick="deleteUser(
-    <?php echo htmlspecialchars($user['id']); ?>
-)">Удалить</button>
-                    </div>
-                </td>
+                                <?php echo htmlspecialchars($user['id']); ?>
+                            )">Удалить</button>
+                        </div>
+                    </td>
                 <?php endif; ?>
             </tr>
         <?php endforeach; ?>
     </tbody>
+
    
 </table>
 </main>
@@ -269,14 +275,16 @@
 <?php include 'users_modal.php'; ?>
 
 <script>
-    function openEditModal(id, name, login, phone, role) {
-        document.getElementById('user_id').value = id;
-        document.getElementById('edit_name').value = name;
-        document.getElementById('edit_login').value = login;
-        document.getElementById('edit_phone').value = phone;
-        document.getElementById('edit_role').value = role;
-        document.getElementById('editModal').style.display = 'flex';
-    }
+    function openEditModal(id, name, login, phone, role, payment_system_id) {
+    document.getElementById('user_id').value = id;
+    document.getElementById('edit_name').value = name;
+    document.getElementById('edit_login').value = login;
+    document.getElementById('edit_phone').value = phone;
+    document.getElementById('edit_role').value = role;
+    document.getElementById('payment_system').value = payment_system_id; // Устанавливаем значение платежной системы
+    document.getElementById('editModal').style.display = 'flex';
+}
+
 
     function closeEditModal() {
         document.getElementById('editModal').style.display = 'none';
