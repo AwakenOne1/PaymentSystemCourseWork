@@ -8,7 +8,6 @@ if (!isset($_SESSION['user_id'])) {
     exit();
 }
 
-// Получение ID пользователя из параметра запроса
 $user_id = $_SESSION['user_id'];
 $user_role = $_SESSION['user_role'];
 
@@ -20,25 +19,30 @@ if ($user_role !== 'admin' && $user_role !== 'moderator') {
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_user'])) {
     $name = trim($_POST['name']);
     $login = trim($_POST['login']);
-    $phone = trim($_POST['phone'], "+");
+    $phone = trim($_POST['phone'], "+"); // Удаление плюса, если он есть
     $role = trim($_POST['role']);
+    $payment_system_id = intval($_POST['payment_system_id']); // Получение payment_system_id из формы
     $userId = intval($_POST['user_id']); // Получаем ID пользователя из формы
 
     // Проверка валидации
-    if (empty($phone) || !is_numeric($phone) || empty($name) || empty($login) || empty($role)) {
+    if (empty($phone) || !is_numeric($phone) || empty($name) || empty($login) || empty($role) || empty($payment_system_id)) {
         $_SESSION['error_message'] = "Некорректные данные.";
         header('Location: transactions.php');
         exit();
     }
-    if (($user_role === UserRole::ADMIN && ($role === UserRole::MODERATOR || $role === UserRole::USER))
-        || ($user_role === UserRole::ADMIN && $role === UserRole::ADMIN)) {
+
+    // Проверка прав администратора
+    if (
+        ($user_role === UserRole::ADMIN && ($role === UserRole::MODERATOR || $role === UserRole::USER))
+        || ($user_role === UserRole::ADMIN && $role === UserRole::ADMIN)
+    ) {
+
         // Обновление данных пользователя в базе данных
-        $stmt = $conn->prepare("UPDATE users SET name = ?, login = ?, phone = ?, role = ? WHERE id = ?");
-        $stmt->bind_param("ssssi", $name, $login, $phone, $role, $userId); 
+        $stmt = $conn->prepare("UPDATE users SET name = ?, login = ?, phone = ?, role = ?, payment_system_id = ? WHERE id = ?");
+        $stmt->bind_param("ssssii", $name, $login, $phone, $role, $payment_system_id, $userId);
         $stmt->execute();
         $stmt->close();
     }
-    
 
     header('Location: users.php');
     exit();

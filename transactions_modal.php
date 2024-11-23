@@ -1,3 +1,7 @@
+<?php
+    $payment_systems = $_SESSION['paymentsystems'] ?? [];
+    include 'TransactionStatus_enum.php';
+?>
 <!-- Модальное окно для создания транзакции -->
 <div id="createModal" class="modal">
     <div class="modal-content">
@@ -12,6 +16,12 @@
             <input type="text" name="destination" id="destination" required>
             <label for="comment">Комментарий:</label>
             <textarea name="comment" id="comment" ></textarea>
+            <label for="payment_system">Платежная система:</label>
+            <select name="payment_system_id" id="payment_system" required>
+        <?php foreach ($payment_systems as $system): ?>
+            <option value="<?php echo $system['Id']; ?>"><?php echo htmlspecialchars($system['Name']); ?></option>
+        <?php endforeach; ?>
+    </select>
             <label>
                 <input type="checkbox" name="confirm" required> Подтверждаю транзакцию
             </label>
@@ -28,16 +38,37 @@
         <form id="editForm" method="POST" action="edit_transaction.php" onsubmit="return validateForm(['edit_sum', 'edit_destination', 'edit_comment'])">
             <input type="hidden" name="edit_transaction" value="1">
             <input type="hidden" name="transaction_id" id="transaction_id" value="">
+
             <label for="edit_sum">Сумма:</label>
             <input type="number" step="0.01" name="sum" id="edit_sum" required>
+
             <label for="edit_destination">Кому:</label>
             <input type="text" name="destination" id="edit_destination" required>
+
             <label for="edit_comment">Комментарий:</label>
             <textarea name="comment" id="edit_comment"></textarea>
+
+            <label for="payment_system">Платежная система:</label>
+            <select name="payment_system_id" id="payment_system" required>
+                <?php foreach ($payment_systems as $system): ?>
+                    <option value="<?php echo $system['Id']; ?>" id="payment_system_<?php echo $system['Id']; ?>">
+                        <?php echo htmlspecialchars($system['Name']); ?>
+                    </option>
+                <?php endforeach; ?>
+            </select>
+
+            <label for="edit_status">Статус:</label>
+            <select name="status" id="edit_status" required>
+                <option value="<?php echo TransactionStatus::IN_PROCESS; ?>">В процессе</option>
+                <option value="<?php echo TransactionStatus::COMPLETED; ?>">Завершено</option>
+                <option value="<?php echo TransactionStatus::CANCELLED; ?>">Отменено</option>
+            </select>
+
             <button type="submit">Сохранить изменения</button>
         </form>
     </div>
 </div>
+
 
 <!-- Модальное окно для поиска -->
 <div id="searchModal" class="modal">

@@ -1,4 +1,6 @@
-
+<?php
+    $payment_systems = $_SESSION['paymentsystems'] ?? [];
+?>
 
 <div id="editModal" class="modal">
     <div class="modal-content">
@@ -18,6 +20,12 @@
                 <option value="admin">Администратор</option>
                 <option value="moderator">Модератор</option>
                 <option value="user">Пользователь</option>
+            </select>
+            <label for="payment_system">Платежная система:</label>
+            <select name="payment_system_id" id="payment_system" required>
+                <?php foreach ($payment_systems as $system): ?>
+                    <option value="<?php echo $system['Id']; ?>"><?php echo htmlspecialchars($system['Name']); ?></option>
+                <?php endforeach; ?>
             </select>
             <div><h1></h1></div>
             <button type="submit">Сохранить изменения</button>
