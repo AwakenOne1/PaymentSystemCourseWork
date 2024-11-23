@@ -404,7 +404,9 @@ $conn->close();
 
     <div class="button-container">
         <button class="search-button" onclick="openSearchModal()">Поиск по критериям</button>
-        <button class="create-button" onclick="openCreateModal()">Создать транзакцию</button>
+         <?php if ($user_role === 'admin' || $user_role === 'user'): ?>
+            <button class="create-button" onclick="openCreateModal()">Создать транзакцию</button>
+         <?php endif; ?> 
     </div>
 </main>
 

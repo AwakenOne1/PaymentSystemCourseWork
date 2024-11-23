@@ -1,5 +1,7 @@
 <?php
     $payment_systems = $_SESSION['paymentsystems'] ?? [];
+
+$user_role = $_SESSION['user_role'];
 ?>
 
 <div id="editModal" class="modal">
