@@ -69,6 +69,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
     $sql = "SELECT t.*, 
                ps.Name AS PaymentSystems, 
+               ps.Rating AS PaymentSystemRating,
                t.Status, 
                GROUP_CONCAT(CONCAT(tl.Action, ': ', tl.Changes, ' (', tl.Timestamp, ')') SEPARATOR '<br>') AS Changes
         FROM transactions t
@@ -108,18 +109,22 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     // Получение всех транзакций, если поиск не выполнялся
     if ($user_role === 'admin') {
         $sql = "SELECT t.*, 
+                ps.Rating AS PaymentSystemRating,
                        GROUP_CONCAT(CONCAT(u.Id, ' (', u.Role, ') ', tl.Action, ' - ', tl.Timestamp, ': ', tl.Changes) SEPARATOR '<br>') as Changes
                 FROM transactions t
                 LEFT JOIN transaction_logs tl ON t.Id = tl.TransactionId
                 LEFT JOIN users u ON tl.UserId = u.Id
+                LEFT JOIN paymentsystems ps ON t.Payment_System_Id = ps.Id
                 GROUP BY t.Id";
         $transactions_result = $conn->query($sql);
     } elseif ($user_role === 'moderator') {
         $sql = "SELECT t.*, 
+                ps.Rating AS PaymentSystemRating,
                        GROUP_CONCAT(CONCAT(u.Id, ' (', u.Role, ') ', tl.Action, ' - ', tl.Timestamp, ': ', tl.Changes) SEPARATOR '<br>') as Changes
                 FROM transactions t
                 LEFT JOIN transaction_logs tl ON t.Id = tl.TransactionId
                 LEFT JOIN users u ON tl.UserId = u.Id
+                LEFT JOIN paymentsystems ps ON t.Payment_System_Id = ps.Id
                 WHERE t.Payment_System_Id = ?
                 GROUP BY t.Id";
         $stmt = $conn->prepare($sql);
@@ -128,10 +133,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $transactions_result = $stmt->get_result();
     } else {
         $sql = "SELECT t.*, 
+                ps.Rating AS PaymentSystemRating,
                        GROUP_CONCAT(CONCAT(u.Id, ' (', u.Role, ') ', tl.Action, ' - ', tl.Timestamp, ': ', tl.Changes) SEPARATOR '<br>') as Changes
                 FROM transactions t
                 LEFT JOIN transaction_logs tl ON t.Id = tl.TransactionId
                 LEFT JOIN users u ON tl.UserId = u.Id
+                LEFT JOIN paymentsystems ps ON t.Payment_System_Id = ps.Id
                 WHERE t.UserId = ?
                 GROUP BY t.Id";
         $stmt = $conn->prepare($sql);
@@ -343,6 +350,7 @@ $conn->close();
                 <th>Комментарий</th>
                 <th>Платежная система</th>
                 <th>Статус</th>
+                <th>Рейтинг</th>
                 <?php if ($user_role === 'admin' || $user_role === 'moderator'): ?>
                     <th>Действия</th>
                     <?php if ($user_role === 'admin'): ?>
@@ -360,6 +368,18 @@ $conn->close();
                     <td><?php echo htmlspecialchars($transaction['Comment']); ?></td>
                     <td><?php echo htmlspecialchars($transaction['payment_system_id']); ?></td>
                     <td><?php echo htmlspecialchars($transaction['status']); ?></td>
+                    <td>
+                        <?php if ($transaction['Status'] === 'cancelled' || $transaction['Status'] === 'completed'): ?>
+                            <div style="display: flex; align-items: center;">
+                                <select name="rating_<?php echo $transaction['Id']; ?>" onchange="updateRating(<?php echo $transaction['Id']; ?>, this.value)">
+                                    <?php for ($i = 1; $i <= 5; $i++): ?>
+                                        <option value="<?php echo $i; ?>"><?php echo $i; ?></option>
+                                    <?php endfor; ?>
+                                </select>
+                                <span style="margin-left: 10px;"><?php echo htmlspecialchars($transaction['PaymentSystemRating']); ?></span>
+                            </div>
+                        <?php endif; ?>
+                    </td>
                     <?php if ($user_role === 'admin' || $user_role === 'moderator'): ?>
                         <td>
                             <div style="display: flex; justify-content: space-between; align-items: center;">
@@ -396,7 +416,7 @@ $conn->close();
 </main>
 
     <?php include 'transactions_modal.php'; ?>
-
+    
     <script>
         function openCreateModal() {
              console.log('openCreateModal вызвана');
@@ -439,7 +459,19 @@ $conn->close();
                 window.location.href = 'delete_transaction.php?id=' + id;
             }
         }
-    
+        function updateRating(transactionId, rating) {
+            // Отправка AJAX-запроса для обновления рейтинга банка
+            var xhr = new XMLHttpRequest();
+            xhr.open('POST', 'update_rating.php', true);
+            xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+            xhr.onreadystatechange = function() {
+                if (xhr.readyState === 4 && xhr.status === 200) {
+                    // Обработка успешного обновления рейтинга
+                    console.log(xhr.responseText);
+                }
+            };
+            xhr.send('transaction_id=' + transactionId + '&rating=' + rating);
+        }
         window.onclick = function(event) {
             if (event.target == document.getElementById('createModal')) {
                 closeCreateModal();
