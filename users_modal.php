@@ -14,7 +14,7 @@ $user_role = $_SESSION['user_role'];
             <label for="edit_name">Имя:</label>
             <input type="text" name="name" id="edit_name" required>
             <label for="edit_login">Логин:</label>
-            <input type="text" name="login" id="edit_login" required>
+            <input type="email" name="login" id="edit_login" required>
             <label for="edit_phone">Телефон:</label>
             <input type="text" name="phone" id="edit_phone" required>
             <label for="edit_role">Роль:</label>
@@ -23,12 +23,14 @@ $user_role = $_SESSION['user_role'];
                 <option value="moderator">Модератор</option>
                 <option value="user">Пользователь</option>
             </select>
-            <label for="payment_system">Платежная система:</label>
-            <select name="payment_system_id" id="payment_system" required>
+           <label for="payment_system">Платежная система:</label>
+            <select name="payment_system_id" id="payment_system">
+                <option value="">Не выбрано</option> <!-- Опция для сброса значения -->
                 <?php foreach ($payment_systems as $system): ?>
                     <option value="<?php echo $system['Id']; ?>"><?php echo htmlspecialchars($system['Name']); ?></option>
                 <?php endforeach; ?>
             </select>
+
             <div><h1></h1></div>
             <button type="submit">Сохранить изменения</button>
         </form>
@@ -36,16 +38,17 @@ $user_role = $_SESSION['user_role'];
 </div>
 <script>
      function validateForm(fields) {
-        let isValid = true;
-        fields.forEach(function(field) {
-            const input = document.getElementById(field);
-            if (!input.value.trim()) {
-                alert('Пожалуйста, заполните все поля.');
-                isValid = false;
-                return;
-            }
-        });
-        return isValid;
-    }
+    let isValid = true;
+    fields.forEach(function (field) {
+        const input = document.getElementById(field);
+        if (!input.value.trim() && field !== "payment_system") {
+            alert("Пожалуйста, заполните все обязательные поля.");
+            isValid = false;
+            return;
+        }
+    });
+    return isValid;
+}
+
 
 </script>
