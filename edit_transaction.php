@@ -17,7 +17,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_transaction'])) 
 
     $user_role = $_SESSION['user_role'];
     if ($user_role === 'admin') {
-        // Администратор может редактировать все поля
         $payment_system_id = trim($_POST['payment_system_id']);
         if (!is_numeric($sum) || empty($destination) || strlen($destination) > 150 || strlen($comment) > 150 || $sum <= 0 || empty($status) || empty($payment_system_id)) {
             $_SESSION['error_message'] = "Некорректные данные.";
