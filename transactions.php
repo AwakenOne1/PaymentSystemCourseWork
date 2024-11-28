@@ -110,6 +110,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     if ($user_role === 'admin') {
         $sql = "SELECT t.*, 
                 ps.Rating AS PaymentSystemRating,
+                t.Status,
                        GROUP_CONCAT(CONCAT(u.Id, ' (', u.Role, ') ', tl.Action, ' - ', tl.Timestamp, ': ', tl.Changes) SEPARATOR '<br>') as Changes
                 FROM transactions t
                 LEFT JOIN transaction_logs tl ON t.Id = tl.TransactionId
@@ -120,6 +121,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     } elseif ($user_role === 'moderator') {
         $sql = "SELECT t.*, 
                 ps.Rating AS PaymentSystemRating,
+                t.Status,
                        GROUP_CONCAT(CONCAT(u.Id, ' (', u.Role, ') ', tl.Action, ' - ', tl.Timestamp, ': ', tl.Changes) SEPARATOR '<br>') as Changes
                 FROM transactions t
                 LEFT JOIN transaction_logs tl ON t.Id = tl.TransactionId
@@ -134,6 +136,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     } else {
         $sql = "SELECT t.*, 
                 ps.Rating AS PaymentSystemRating,
+                t.Status,
                        GROUP_CONCAT(CONCAT(u.Id, ' (', u.Role, ') ', tl.Action, ' - ', tl.Timestamp, ': ', tl.Changes) SEPARATOR '<br>') as Changes
                 FROM transactions t
                 LEFT JOIN transaction_logs tl ON t.Id = tl.TransactionId
@@ -217,11 +220,13 @@ $conn->close();
         main {
             padding: 2em;
             display: flex;
+            overflow-x:auto;
             flex-direction: column;
             align-items: flex-start; /* Выравнивание по левому краю */
         }
         table {
             width: 100%;
+            max-width: 1000PX;
             border-collapse: collapse;
             margin-bottom: 2em;
         }
@@ -269,6 +274,11 @@ $conn->close();
         }
         .delete-button:hover {
             background-color: #e53935;
+        }
+        .changes {
+            max-width: 150px;
+            max-height: 100px;
+            overflow: auto;
         }
         .button-container {
             display: flex;
@@ -329,6 +339,7 @@ $conn->close();
     </div>
     <nav class="nav-tabs">
         <a href="transactions.php">Транзакции</a>
+        <a href="paymentSystems.php">Платежные системы</a>
         <?php if ($user_role === 'admin' || $user_role === 'moderator'): ?>
             <a href="users.php">Пользователи</a>
         <?php endif; ?>
@@ -350,7 +361,10 @@ $conn->close();
                 <th>Комментарий</th>
                 <th>Платежная система</th>
                 <th>Статус</th>
-                <th>Рейтинг</th>
+                <th>Рейтинг платежной системы</th>
+                <?php if($user_role === 'user'): ?>
+                    <th>Оценка платежной системы</th>
+                <?php endif; ?>
                 <?php if ($user_role === 'admin' || $user_role === 'moderator'): ?>
                     <th>Действия</th>
                     <?php if ($user_role === 'admin'): ?>
@@ -369,32 +383,45 @@ $conn->close();
                     <td><?php echo htmlspecialchars($transaction['payment_system_id']); ?></td>
                     <td><?php echo htmlspecialchars($transaction['status']); ?></td>
                     <td>
+                        <div style="display: flex; align-items: center;">
+                                <span style="margin-left: 10px;"><?php echo htmlspecialchars($transaction['PaymentSystemRating']); ?></span>
+                        </div>
+                     <?php if($user_role === 'user'): ?>
+                    <td>
                         <?php if ($transaction['Status'] === 'cancelled' || $transaction['Status'] === 'completed'): ?>
                             <div style="display: flex; align-items: center;">
-                                <select name="rating_<?php echo $transaction['Id']; ?>" onchange="updateRating(<?php echo $transaction['Id']; ?>, this.value)">
-                                    <?php for ($i = 1; $i <= 5; $i++): ?>
-                                        <option value="<?php echo $i; ?>"><?php echo $i; ?></option>
-                                    <?php endfor; ?>
-                                </select>
-                                <span style="margin-left: 10px;"><?php echo htmlspecialchars($transaction['PaymentSystemRating']); ?></span>
+                                <?php if ($transaction['UserRated'] == 0): ?>
+                                    <select name="rating_<?php echo $transaction['Id']; ?>" id="rating_<?php echo $transaction['Id']; ?>">
+                                        <?php for ($i = 1; $i <= 5; $i++): ?>
+                                            <option value="<?php echo $i; ?>"><?php echo $i; ?></option>
+                                        <?php endfor; ?>
+                                    </select>
+                                    <button class="edit-button" onclick="updateRating(<?php echo $transaction['Id']; ?>)">Оценить</button>
+                                <?php else: ?>
+                                    <span>Вы уже оценили эту транзакцию</span>
+                                <?php endif; ?>
+                                
                             </div>
                         <?php endif; ?>
                     </td>
-                    <?php if ($user_role === 'admin' || $user_role === 'moderator'): ?>
-                        <td>
-                            <div style="display: flex; justify-content: space-between; align-items: center;">
-                                <button class="edit-button" onclick="openEditModal(<?php echo $transaction['Id']; ?>, '<?php echo htmlspecialchars($transaction['Sum']); ?>', '<?php echo htmlspecialchars($transaction['Destination']); ?>', '<?php echo htmlspecialchars($transaction['Comment']); ?>')">Редактировать</button>
-                                <button class="delete-button" onclick="deleteTransaction(<?php echo $transaction['Id']; ?>)">Удалить</button>
-                            </div>
-                        </td>
                     <?php endif; ?>
+                        <?php if ($user_role === 'admin' || $user_role === 'moderator'): ?>
+                            <td>
+                                <div style="display: flex; justify-content: space-between; align-items: center;">
+                                    <button class="edit-button" onclick="openEditModal(<?php echo $transaction['Id']; ?>, '<?php echo htmlspecialchars($transaction['Sum']); ?>', '<?php echo htmlspecialchars($transaction['Destination']); ?>', '<?php echo htmlspecialchars($transaction['Comment']); ?>')">Редактировать</button>
+                                    <button class="delete-button" onclick="deleteTransaction(<?php echo $transaction['Id']; ?>)">Удалить</button>
+                                </div>
+                            </td>
+                        <?php endif; ?>
                     <?php if ($user_role === 'admin'): ?>
                     <td>
                         <?php if (!empty($transaction['Changes'])): ?>
+                        <div class="changes">
                             <details>
                                 <summary>История изменений</summary>
                                 <div><?php echo $transaction['Changes']; ?></div>
                             </details>
+                            </div>
                         <?php else: ?>
                             Нет изменений
                         <?php endif; ?>
@@ -409,9 +436,9 @@ $conn->close();
 
     <div class="button-container">
         <button class="search-button" onclick="openSearchModal()">Поиск по критериям</button>
-         <?php if ($user_role === 'admin' || $user_role === 'user'): ?>
-            <button class="create-button" onclick="openCreateModal()">Создать транзакцию</button>
-         <?php endif; ?> 
+        <?php if ($user_role === 'user'): ?>
+            <a href="paymentSystems.php" class="create-button">Создать транзакцию</a>
+        <?php endif; ?>    
     </div>
 </main>
 
@@ -419,7 +446,7 @@ $conn->close();
     
     <script>
         function openCreateModal() {
-             console.log('openCreateModal вызвана');
+            console.log('openCreateModal вызвано');
             document.getElementById('createModal').style.display = 'flex';
         }
 
@@ -428,6 +455,7 @@ $conn->close();
         }
 
         function openSearchModal() {
+             console.log('openSearchModal вызвано');
             document.getElementById('searchModal').style.display = 'flex';
         }
 
@@ -435,6 +463,7 @@ $conn->close();
             document.getElementById('searchModal').style.display = 'none';
         }
         function openEditModal(transactionId, sum, destination, comment, status, paymentSystemId) {
+            console.log('openEditModal вызвано');
             document.getElementById('transaction_id').value = transactionId;
             document.getElementById('edit_sum').value = sum;
             document.getElementById('edit_destination').value = destination;
@@ -459,7 +488,9 @@ $conn->close();
                 window.location.href = 'delete_transaction.php?id=' + id;
             }
         }
-        function updateRating(transactionId, rating) {
+        function updateRating(transactionId) {
+            var rating = document.getElementById('rating_' + transactionId).value;
+
             // Отправка AJAX-запроса для обновления рейтинга банка
             var xhr = new XMLHttpRequest();
             xhr.open('POST', 'update_rating.php', true);
@@ -468,6 +499,8 @@ $conn->close();
                 if (xhr.readyState === 4 && xhr.status === 200) {
                     // Обработка успешного обновления рейтинга
                     console.log(xhr.responseText);
+                    // Обновление страницы после успешного обновления рейтинга
+                    location.reload();
                 }
             };
             xhr.send('transaction_id=' + transactionId + '&rating=' + rating);
