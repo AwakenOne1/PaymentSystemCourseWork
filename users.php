@@ -214,6 +214,7 @@
     </div>
     <nav class="nav-tabs">
         <a href="transactions.php">Транзакции</a>
+        <a href="paymentSystems.php">Платежные системы</a>
         <?php if ($user_role === 'admin' || $user_role === 'moderator'): ?>
             <a href="users.php">Пользователи</a>
         <?php endif; ?>

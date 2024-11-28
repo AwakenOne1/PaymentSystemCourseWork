@@ -16,9 +16,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['create_transaction'])
     $payment_system_id = $_POST['payment_system_id']; // ID платежной системы
     $user_id = $_SESSION['user_id'];
     $user_role = $_SESSION['user_role'];
-
+    var_dump($payment_system_id);
     // Проверка валидации
-    if (!is_numeric($sum) || empty($destination) || $destination === '' || strlen($destination) > 150 || strlen($comment) > 150 || $sum <= 0 || !is_numeric($payment_system_id)) {
+    if (!is_numeric($sum) || empty($destination) || $destination === '' || strlen($destination) > 150 || strlen($comment) > 150 || $sum <= 0) {
         $_SESSION['error_message'] = "Некорректные данные.";
         header('Location: transactions.php');
         exit();
