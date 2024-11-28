@@ -226,7 +226,7 @@ $conn->close();
         }
         table {
             width: 100%;
-            max-width: 1000PX;
+            max-width: 1500PX;
             border-collapse: collapse;
             margin-bottom: 2em;
         }
