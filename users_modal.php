@@ -26,7 +26,7 @@ $user_role = $_SESSION['user_role'];
             <label for="payment_system">Платежная система:</label>
             <select name="payment_system_id" id="payment_system" <?php if ($user_role === 'user')
                 echo 'disabled'; ?>>
-                <option value="">Не выбрано</option> <!-- Опция для сброса значения -->
+                <!--<option value="">Не выбрано</option>--> <!-- Опция для сброса значения -->
                 <?php foreach ($payment_systems as $system): ?>
                     <option value="<?php echo $system['Id']; ?>"><?php echo htmlspecialchars($system['Name']); ?></option>
                 <?php endforeach; ?>
