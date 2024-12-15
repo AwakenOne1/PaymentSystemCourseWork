@@ -185,4 +185,45 @@
     width: 25%;
     max-width: 600px;
 }
+
+.modal form {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.modal label {
+    margin-top: 10px;
+    font-weight: bold;
+}
+
+.modal input,
+.modal select,
+.modal textarea {
+    padding: 8px;
+    border: 1px solid #00bcd4;
+    border-radius: 4px;
+    margin-top: 5px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.modal button[type="submit"] {
+    margin-top: 20px;
+    padding: 10px;
+    background-color: #00bcd4;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.modal button[type="submit"]:hover {
+    background-color: #008ba3;
+}
+
+.modal-content {
+    width: 400px;
+    max-width: 90%;
+}
 </style>

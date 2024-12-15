@@ -133,12 +133,12 @@
             cursor: pointer;
         }
         .edit-button {
-            background-color: #4CAF50;
+            background-color: #00bcd4;
             color: white;
             margin-right: 0.5em;
         }
         .edit-button:hover {
-            background-color: #45a049;
+            background-color: #008ba3;
         }
         .delete-button {
             background-color: #f44336;
@@ -158,7 +158,7 @@
         .create-button {
         }
         .create-button, .search-button {
-            background-color: #4CAF50;
+            background-color: #00bcd4;
             color: white;
             padding: 1em 2em;
             font-size: 1.2em;
@@ -168,7 +168,7 @@
             width: auto;
         }
         .create-button:hover, .search-button:hover {
-            background-color: #45a049;
+            background-color: #008ba3;
         }
         .modal {
             display: none;

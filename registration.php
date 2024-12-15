@@ -1,4 +1,4 @@
- <?php
+<?php
 session_start();
 $error = isset($_SESSION['error']) ? $_SESSION['error'] : '';
 unset($_SESSION['error']);
@@ -22,11 +22,13 @@ unset($_SESSION['error']);
         }
 
         .container {
+            width: 100%;
             max-width: 400px;
             padding: 20px;
             background-color: #fff;
             border-radius: 8px;
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            box-sizing: border-box;
         }
 
         h1 {
@@ -43,14 +45,16 @@ unset($_SESSION['error']);
         input[type="email"],
         input[type="password"],
         input[type="tel"] {
+            width: 100%;
             padding: 10px;
             margin-bottom: 15px;
-            border: 1px solid #ccc;
+            border: 1px solid #00bcd4;
             border-radius: 4px;
+            box-sizing: border-box;
         }
 
         button {
-            background-color: #4CAF50;
+            background-color: #00bcd4;
             color: white;
             padding: 10px 15px;
             border: none;
@@ -59,7 +63,7 @@ unset($_SESSION['error']);
         }
 
         button:hover {
-            background-color: #45a049;
+            background-color: #008ba3;
         }
 
         .login-link {
@@ -106,6 +110,12 @@ unset($_SESSION['error']);
             color: black;
             text-decoration: none;
             cursor: pointer;
+        }
+
+        form {
+            width: 100%;
+            padding: 20px;
+            box-sizing: border-box;
         }
     </style>
 </head>

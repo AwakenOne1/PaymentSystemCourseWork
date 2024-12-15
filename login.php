@@ -77,14 +77,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         input[type="text"],
         input[type="password"] {
+            width: 100%;
             padding: 10px;
             margin-bottom: 15px;
-            border: 1px solid #ccc;
+            border: 1px solid #00bcd4;
             border-radius: 4px;
+            box-sizing: border-box;
         }
 
         button {
-            background-color: #4CAF50;
+            background-color: #00bcd4;
             color: white;
             padding: 10px 15px;
             border: none;
@@ -94,7 +96,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         button:hover {
-            background-color: #45a049;
+            background-color: #008ba3;
         }
 
         .register-link {

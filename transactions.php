@@ -152,6 +152,16 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $transactions = $transactions_result->fetch_all(MYSQLI_ASSOC);
 }
 
+// Получаем платежные системы для модального окна
+$systems_result = $conn->query("SELECT Id, Name FROM payment_systems");
+$payment_systems = [];
+if ($systems_result) {
+    while ($system = $systems_result->fetch_assoc()) {
+        $payment_systems[] = $system;
+    }
+}
+$_SESSION['paymentsystems'] = $payment_systems;
+
 $conn->close();
 ?>
 
