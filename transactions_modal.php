@@ -7,25 +7,28 @@
     <div class="modal-content">
         <span class="close" onclick="closeCreateModal()">&times;</span>
         <h2>Создать транзакцию</h2>
-        <form id="createForm" method="POST" action="create_transaction.php" onsubmit="return validateForm(['sum', 'destination', 'comment'])">
+        <form id="createForm" method="POST" action="create_transaction.php">
             <input type="hidden" name="create_transaction" value="1">
-            <input type="hidden" name="user_id" value="<?php echo $user_id; ?>">
+            
             <label for="sum">Сумма:</label>
             <input type="number" step="0.01" name="sum" id="sum" required>
+            
             <label for="destination">Кому:</label>
             <input type="text" name="destination" id="destination" required>
+            
             <label for="comment">Комментарий:</label>
-            <textarea name="comment" id="comment" ></textarea>
+            <textarea name="comment" id="comment"></textarea>
+            
             <label for="payment_system">Платежная система:</label>
             <select name="payment_system_id" id="payment_system" required>
-        <?php foreach ($payment_systems as $system): ?>
-            <option value="<?php echo $system['Id']; ?>"><?php echo htmlspecialchars($system['Name']); ?></option>
-        <?php endforeach; ?>
-    </select>
-            <label>
-                <input type="checkbox" name="confirm" required> Подтверждаю транзакцию
-            </label>
-            <button type="submit">Совершить транзакцию</button>
+                <?php foreach ($payment_systems as $system): ?>
+                    <option value="<?php echo $system['Id']; ?>">
+                        <?php echo htmlspecialchars($system['Name']); ?>
+                    </option>
+                <?php endforeach; ?>
+            </select>
+            
+            <button type="submit">Создать транзакцию</button>
         </form>
     </div>
 </div>
@@ -160,3 +163,26 @@
         document.getElementById('searchForm').submit();
    }
 </script>
+
+<style>
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    justify-content: center;
+    align-items: center;
+}
+
+.modal-content {
+    background-color: #fff;
+    padding: 2em;
+    border-radius: 0.5em;
+    width: 25%;
+    max-width: 600px;
+}
+</style>

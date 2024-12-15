@@ -164,8 +164,8 @@ $conn->close();
     <link rel="stylesheet" href="static.css">
     <style>
         body {
-            font-family: Arial, sans-serif;
             background-color: #f4f4f4;
+            font-family: Arial, sans-serif;
             margin: 0;
             padding: 0;
         }
@@ -174,7 +174,7 @@ $conn->close();
             display: flex;
             align-items: center;
             padding: 1.5em;
-            background-color: #4CAF50;
+            background-color: #00bcd4;
             color: white;
         }
 
@@ -210,10 +210,13 @@ $conn->close();
                 text-decoration: underline;
             }
         main {
-            padding: 2em;
-            display: flex;
-            overflow-x:auto;
-            flex-direction: column;
+            padding: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: white;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            border-radius: 5px;
+            margin-top: 20px;
         }
         table {
             width: 100%;
@@ -252,12 +255,12 @@ $conn->close();
             cursor: pointer;
         }
         .edit-button {
-            background-color: #4CAF50;
+            background-color: #00bcd4;
             color: white;
-            margin-right: 0.5em;
+            margin-right: 10px;
         }
         .edit-button:hover {
-            background-color: #45a049;
+            background-color: #008ba3;
         }
         .delete-button {
             background-color: #f44336;
@@ -273,8 +276,7 @@ $conn->close();
         }
         .button-container {
             display: flex;
-            align-items: center;
-            width: 100%;
+            gap: 20px;
             margin: 1em 0;
         }
         .search-button {
@@ -282,7 +284,7 @@ $conn->close();
         .create-button {
         }
         .create-button, .search-button {
-            background-color: #4CAF50;
+            background-color: #00bcd4;
             color: white;
             padding: 1em 2em;
             font-size: 1.2em;
@@ -292,7 +294,7 @@ $conn->close();
             width: auto;
         }
         .create-button:hover, .search-button:hover {
-            background-color: #45a049;
+            background-color: #008ba3;
         }
         .modal {
             display: none;
@@ -317,6 +319,79 @@ $conn->close();
             float: right;
             font-size: 1.2em;
             cursor: pointer;
+        }
+
+        button, 
+        .button, 
+        input[type="submit"],
+        .create-button, 
+        .search-button,
+        .edit-button,
+        .delete-button {
+            background-color: #00bcd4;
+            color: white;
+            padding: 0.5em 1em;
+            border: none;
+            border-radius: 0.25em;
+            cursor: pointer;
+            font-size: 1em;
+        }
+
+        button:hover, 
+        .button:hover, 
+        input[type="submit"]:hover,
+        .create-button:hover, 
+        .search-button:hover,
+        .edit-button:hover,
+        .delete-button:hover {
+            background-color: #008ba3;
+        }
+
+        select,
+        input[type="text"],
+        input[type="number"],
+        input[type="email"],
+        input[type="password"],
+        textarea {
+            border: 1px solid #00bcd4;
+            border-radius: 0.25em;
+            padding: 0.5em;
+        }
+
+        select:focus,
+        input:focus,
+        textarea:focus {
+            outline: 2px solid #00bcd4;
+            border-color: #00bcd4;
+        }
+
+        .button-container {
+            display: flex;
+            gap: 20px;
+            margin: 1em 0;
+        }
+
+        main {
+            padding: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: white;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            border-radius: 5px;
+            margin-top: 20px;
+        }
+
+        a {
+            color: #00bcd4;
+            text-decoration: none;
+        }
+
+        a:hover {
+            color: #008ba3;
+        }
+
+        .nav-tabs a {
+            color: white;
         }
     </style>
 </head>
@@ -370,7 +445,7 @@ $conn->close();
                     <td><?php echo htmlspecialchars($transaction['Destination']); ?></td>
                     <td><?php echo htmlspecialchars($transaction['Comment']); ?></td>
                     <td><?php echo htmlspecialchars($transaction['payment_system_id']); ?></td>
-                    <td><?php echo htmlspecialchars($transaction['status']); ?></td>
+                    <td><?php echo htmlspecialchars($transaction['Status']); ?></td>
                     <td>
                         <div style="display: flex; align-items: center;">
                                 <span style="margin-left: 10px;"><?php echo htmlspecialchars($transaction['PaymentSystemRating']); ?></span>
