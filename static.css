@@ -6,7 +6,48 @@ body {
 }
 
 header {
+    display: flex;
+    align-items: center;
+    padding: 1.5em;
     background-color: #00bcd4;
+    color: white;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.header-left {
+    display: flex;
+    align-items: center;
+}
+
+.nav-tabs {
+    display: flex;
+    margin: 0 auto;
+}
+
+.header-right {
+    margin-left: auto;
+    padding-right: 0;
+}
+
+.logout a {
+    text-decoration: none;
+    color: white;
+}
+
+.logout a:hover {
+    text-decoration: underline;
+    color: white;
+}
+
+.nav-tabs a {
+    color: white;
+    text-decoration: none;
+    padding: 0 1em;
+}
+
+.nav-tabs a:hover {
+    text-decoration: underline;
 }
 
 button, 
@@ -78,10 +119,6 @@ a:hover {
     color: #008ba3;
 }
 
-.nav-tabs a {
-    color: white;
-}
-
 .modal {
     display: none;
     position: fixed;
@@ -101,5 +138,19 @@ a:hover {
     border-radius: 0.5em;
     width: 25%;
     max-width: 600px;
+}
+
+.header-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.user-info {
+    color: white;
+    font-size: 1.1em;
 }
 

@@ -108,42 +108,16 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 } else {
     
     if ($user_role === 'admin') {
-        $sql = "SELECT t.*, 
-                ps.Rating AS PaymentSystemRating,
-                t.Status,
-                       GROUP_CONCAT(CONCAT(u.Id, ' (', u.Role, ') ', tl.Action, ' - ', tl.Timestamp, ': ', tl.Changes) SEPARATOR '<br>') as Changes
-                FROM transactions t
-                LEFT JOIN transaction_logs tl ON t.Id = tl.TransactionId
-                LEFT JOIN users u ON tl.UserId = u.Id
-                LEFT JOIN payment_systems ps ON t.Payment_System_Id = ps.Id
-                GROUP BY t.Id";
+        $sql = "SELECT * FROM transactions_with_ratings";
         $transactions_result = $conn->query($sql);
     } elseif ($user_role === 'moderator') {
-        $sql = "SELECT t.*, 
-                ps.Rating AS PaymentSystemRating,
-                t.Status,
-                       GROUP_CONCAT(CONCAT(u.Id, ' (', u.Role, ') ', tl.Action, ' - ', tl.Timestamp, ': ', tl.Changes) SEPARATOR '<br>') as Changes
-                FROM transactions t
-                LEFT JOIN transaction_logs tl ON t.Id = tl.TransactionId
-                LEFT JOIN users u ON tl.UserId = u.Id
-                LEFT JOIN payment_systems ps ON t.Payment_System_Id = ps.Id
-                WHERE t.Payment_System_Id = ?
-                GROUP BY t.Id";
+        $sql = "SELECT * FROM transactions_with_ratings WHERE Payment_System_Id = ?";
         $stmt = $conn->prepare($sql);
-        $stmt->bind_param('i', $user['payment_system_id']);  
+        $stmt->bind_param('i', $user['payment_system_id']);
         $stmt->execute();
         $transactions_result = $stmt->get_result();
     } else {
-        $sql = "SELECT t.*, 
-                ps.Rating AS PaymentSystemRating,
-                t.Status,
-                       GROUP_CONCAT(CONCAT(u.Id, ' (', u.Role, ') ', tl.Action, ' - ', tl.Timestamp, ': ', tl.Changes) SEPARATOR '<br>') as Changes
-                FROM transactions t
-                LEFT JOIN transaction_logs tl ON t.Id = tl.TransactionId
-                LEFT JOIN users u ON tl.UserId = u.Id
-                LEFT JOIN payment_systems ps ON t.Payment_System_Id = ps.Id
-                WHERE t.UserId = ?
-                GROUP BY t.Id";
+        $sql = "SELECT * FROM transactions_with_ratings WHERE UserId = ?";
         $stmt = $conn->prepare($sql);
         $stmt->bind_param('i', $user_id);
         $stmt->execute();
@@ -152,7 +126,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $transactions = $transactions_result->fetch_all(MYSQLI_ASSOC);
 }
 
-// Получаем платежные системы для модального окна
+
 $systems_result = $conn->query("SELECT Id, Name FROM payment_systems");
 $payment_systems = [];
 if ($systems_result) {
@@ -198,6 +172,7 @@ $conn->close();
 
         .nav-tabs {
             display: flex;
+            margin: 0;
         }
 
         .logout a {
@@ -454,7 +429,7 @@ $conn->close();
                     <td><?php echo htmlspecialchars($transaction['Sum']); ?></td>
                     <td><?php echo htmlspecialchars($transaction['Destination']); ?></td>
                     <td><?php echo htmlspecialchars($transaction['Comment']); ?></td>
-                    <td><?php echo htmlspecialchars($transaction['payment_system_id']); ?></td>
+                    <td><?php echo htmlspecialchars($transaction['PaymentSystems']); ?></td>
                     <td><?php echo htmlspecialchars($transaction['Status']); ?></td>
                     <td>
                         <div style="display: flex; align-items: center;">
@@ -464,7 +439,7 @@ $conn->close();
                     <td>
                         <?php if ($transaction['Status'] === 'cancelled' || $transaction['Status'] === 'completed'): ?>
                             <div style="display: flex; align-items: center;">
-                                <?php if ($transaction['UserRated'] == 0): ?>
+                                <?php if ($transaction['HasUserRating'] == 0): ?>
                                     <select name="rating_<?php echo $transaction['Id']; ?>" id="rating_<?php echo $transaction['Id']; ?>">
                                         <?php for ($i = 1; $i <= 5; $i++): ?>
                                             <option value="<?php echo $i; ?>"><?php echo $i; ?></option>
@@ -563,21 +538,26 @@ $conn->close();
             }
         }
         function updateRating(transactionId) {
-            var rating = document.getElementById('rating_' + transactionId).value;
-
+            const rating = document.getElementById('rating_' + transactionId).value;
             
-            var xhr = new XMLHttpRequest();
-            xhr.open('POST', 'update_rating.php', true);
-            xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
-            xhr.onreadystatechange = function() {
-                if (xhr.readyState === 4 && xhr.status === 200) {
-                    
-                    console.log(xhr.responseText);
-                    
+            fetch('update_rating.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: 'transaction_id=' + transactionId + '&rating=' + rating
+            })
+            .then(response => response.text())
+            .then(result => {
+                alert(result);
+                if (result === "Оценка успешно добавлена") {
                     location.reload();
                 }
-            };
-            xhr.send('transaction_id=' + transactionId + '&rating=' + rating);
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Произошла ошибка при отправке оценки');
+            });
         }
         window.onclick = function(event) {
             if (event.target == document.getElementById('createModal')) {

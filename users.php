@@ -1,42 +1,46 @@
- <?php
- include 'db.php';
- include 'userRole_enum.php';
- session_start();
+<?php
+include 'db.php';
+include 'userRole_enum.php';
+session_start();
 
- if (!isset($_SESSION['user_id'])) {
-     header('Location: login.php');
-     exit();
- }
- $user_id = $_SESSION['user_id'];
- $user_role = $_SESSION['user_role'];
+if (!isset($_SESSION['user_id'])) {
+    header('Location: login.php');
+    exit();
+}
+$user_id = $_SESSION['user_id'];
+$user_role = $_SESSION['user_role'];
 
- $result = $conn->query("SELECT login, name FROM users WHERE Id = $user_id");
- $userHeader = $result->fetch_assoc();
+$result = $conn->query("SELECT login, name FROM users WHERE Id = $user_id");
+$userHeader = $result->fetch_assoc();
 
- if ($user_role !== 'admin' && $user_role !== 'moderator') {
-     header('Location: transactions.php');
-     exit();
- }
- 
- if (isset($_GET['action']) && $_GET['action'] === 'logout') {
-     session_unset();
-     session_destroy();
-     header('Location: login.php');
-     exit();
- }
- if (isset($_SESSION['error_message'])) {
-     echo '<div class="error-message">' . $_SESSION['error_message'] . '</div>';
-     unset($_SESSION['error_message']);
- }
+if ($user_role !== 'admin' && $user_role !== 'moderator') {
+    header('Location: transactions.php');
+    exit();
+}
 
- 
- $result = $conn->query("SELECT users.*, paymentsystems.name AS payment_system_name FROM users
-                        LEFT JOIN paymentsystems ON users.payment_system_id = paymentsystems.id");
- $users = $result->fetch_all(MYSQLI_ASSOC);
+if (isset($_GET['action']) && $_GET['action'] === 'logout') {
+    session_unset();
+    session_destroy();
+    header('Location: login.php');
+    exit();
+}
+if (isset($_SESSION['error_message'])) {
+    echo '<div class="error-message">' . $_SESSION['error_message'] . '</div>';
+    unset($_SESSION['error_message']);
+}
 
 
- $conn->close();
- ?>
+$result = $conn->query("SELECT users.*, payment_systems.name AS payment_system_name FROM users
+                       LEFT JOIN payment_systems ON users.payment_system_id = payment_systems.id");
+$users = $result->fetch_all(MYSQLI_ASSOC);
+
+
+$conn->close();
+
+function h($str) {
+    return htmlspecialchars($str ?? '');
+}
+?>
 
 
 <!DOCTYPE html>
@@ -48,16 +52,17 @@
     <link rel="stylesheet" href="static.css">
     <style>
         body {
-            font-family: Arial, sans-serif;
             background-color: #f4f4f4;
+            font-family: Arial, sans-serif;
             margin: 0;
             padding: 0;
         }
+
         header {
             display: flex;
             align-items: center;
             padding: 1.5em;
-            background-color: #4CAF50;
+            background-color: #00bcd4;
             color: white;
         }
 
@@ -66,11 +71,9 @@
             align-items: center;
         }
 
-        .user-info {
-        }
-
         .nav-tabs {
             display: flex;
+            margin: 0;
         }
 
         .logout a {
@@ -78,10 +81,10 @@
             color: white;
         }
 
-            .logout a:hover {
-                text-decoration: underline;
-                color: white;
-            }
+        .logout a:hover {
+            text-decoration: underline;
+            color: white;
+        }
 
         .nav-tabs a {
             color: white;
@@ -89,42 +92,37 @@
             padding: 0 1em;
         }
 
-            .nav-tabs a:hover {
-                text-decoration: underline;
-            }
-        main {
-            padding: 2em;
-            display: flex;
-            flex-direction: column;
+        .nav-tabs a:hover {
+            text-decoration: underline;
         }
+
+        main {
+            padding: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: white;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            border-radius: 5px;
+            margin-top: 20px;
+        }
+
         table {
             width: 100%;
+            max-width: 1500PX;
             border-collapse: collapse;
             margin-bottom: 2em;
         }
+
         table, th, td {
             border: 1px solid #ddd;
         }
+
         th, td {
             padding: 1em;
             text-align: left;
             word-wrap: break-word;
         }
-        th:nth-child(1), td:nth-child(1) {
-            width: 10%;
-        }
-        th:nth-child(2), td:nth-child(2) {
-            width: 15%;
-        }
-        th:nth-child(3), td:nth-child(3) {
-            width: 25%;
-        }
-        th:nth-child(4), td:nth-child(4) {
-            width: 30%;
-        }
-        th:nth-child(5), td:nth-child(5) {
-            width: 10%;
-        }
+
         .edit-button, .delete-button {
             padding: 0.8em 0.8em;
             font-size: 1em;
@@ -132,31 +130,32 @@
             border-radius: 0.25em;
             cursor: pointer;
         }
+
         .edit-button {
             background-color: #00bcd4;
             color: white;
-            margin-right: 0.5em;
+            margin-right: 10px;
         }
+
         .edit-button:hover {
             background-color: #008ba3;
         }
+
         .delete-button {
             background-color: #f44336;
             color: white;
         }
+
         .delete-button:hover {
             background-color: #e53935;
         }
+
         .button-container {
             display: flex;
-            align-items: center;
-            width: 100%;
+            gap: 20px;
             margin: 1em 0;
         }
-        .search-button {
-        }
-        .create-button {
-        }
+
         .create-button, .search-button {
             background-color: #00bcd4;
             color: white;
@@ -167,9 +166,11 @@
             cursor: pointer;
             width: auto;
         }
+
         .create-button:hover, .search-button:hover {
             background-color: #008ba3;
         }
+
         .modal {
             display: none;
             position: fixed;
@@ -182,24 +183,67 @@
             justify-content: center;
             align-items: center;
         }
+
         .modal-content {
             background-color: #fff;
             padding: 2em;
             border-radius: 0.5em;
-            width: 25%;
-            max-width: 600px;
+            width: 400px;
+            max-width: 90%;
         }
+
         .close {
             float: right;
             font-size: 1.2em;
             cursor: pointer;
+        }
+
+        button, 
+        .button, 
+        input[type="submit"] {
+            background-color: #00bcd4;
+            color: white;
+            padding: 0.5em 1em;
+            border: none;
+            border-radius: 0.25em;
+            cursor: pointer;
+            font-size: 1em;
+        }
+
+        button:hover, 
+        .button:hover, 
+        input[type="submit"]:hover {
+            background-color: #008ba3;
+        }
+
+        select,
+        input[type="text"],
+        input[type="number"],
+        input[type="email"],
+        input[type="password"],
+        textarea {
+            border: 1px solid #00bcd4;
+            border-radius: 0.25em;
+            padding: 0.5em;
+        }
+
+        select:focus,
+        input:focus,
+        textarea:focus {
+            outline: 2px solid #00bcd4;
+            border-color: #00bcd4;
+        }
+
+        h1 {
+            margin-bottom: 20px;
+            color: #333;
         }
     </style>
 </head>
 <body>
     <header>
     <div class="header-left">
-        <div class="user-info"><?php echo htmlspecialchars($userHeader['login']); ?> (<?php echo htmlspecialchars($userHeader['name']); ?>)</div>
+        <div class="user-info"><?php echo h($userHeader['login'] ?? ''); ?> (<?php echo h($userHeader['name'] ?? ''); ?>)</div>
     </div>
     <nav class="nav-tabs">
         <a href="transactions.php">Транзакции</a>
@@ -232,24 +276,24 @@
     <tbody>
         <?php foreach ($users as $user): ?>
             <tr>
-                <td><?php echo htmlspecialchars($user['id']); ?></td>
-                <td><?php echo htmlspecialchars($user['name']); ?></td>
-                <td><?php echo htmlspecialchars($user['login']); ?></td>
-                <td><?php echo htmlspecialchars($user['phone']); ?></td>
-                <td><?php echo htmlspecialchars($user['role']); ?></td>
-                <td><?php echo htmlspecialchars($user['payment_system_name']); ?></td> <!-- Отображение имени платежной системы -->
-                <?php if ($user_role === 'admin' && htmlspecialchars($user['role']) !== UserRole::ADMIN): ?>
+                <td><?php echo h($user['id'] ?? ''); ?></td>
+                <td><?php echo h($user['name'] ?? ''); ?></td>
+                <td><?php echo h($user['login'] ?? ''); ?></td>
+                <td><?php echo h($user['phone'] ?? ''); ?></td>
+                <td><?php echo h($user['role'] ?? ''); ?></td>
+                <td><?php echo h($user['payment_system_name'] ?? ''); ?></td> <!-- Отображение имени платежной системы -->
+                <?php if ($user_role === 'admin' && h($user['role']) !== UserRole::ADMIN): ?>
                     <td>
                         <div style="display: flex; justify-content: space-between; align-items: center;">
                             <button class="edit-button" onclick="openEditModal(
-                                 <?php echo htmlspecialchars($user['id']); ?>,
-                                '<?php echo htmlspecialchars($user['name']); ?>',
-                                '<?php echo htmlspecialchars($user['login']); ?>',
-                                '<?php echo htmlspecialchars($user['phone']); ?>',
-                                '<?php echo htmlspecialchars($user['role']); ?>',
-                                '<?php echo htmlspecialchars($user['payment_system_id']); ?>')">Редактировать</button>
+                                 <?php echo h($user['id']); ?>,
+                                '<?php echo h($user['name']); ?>',
+                                '<?php echo h($user['login']); ?>',
+                                '<?php echo h($user['phone']); ?>',
+                                '<?php echo h($user['role']); ?>',
+                                '<?php echo h($user['payment_system_id']); ?>')">Редактировать</button>
                             <button class="delete-button" onclick="deleteUser(
-                                <?php echo htmlspecialchars($user['id']); ?>
+                                <?php echo h($user['id']); ?>
                             )">Удалить</button>
                         </div>
                     </td>
