@@ -35,11 +35,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_user'])) {
 
     // Проверка прав администратора
     if ($user_role === UserRole::ADMIN) {
+        // Если роль изменяется на 'admin' или 'user', обнуляем payment_system_id
+        if ($role === UserRole::ADMIN || $role === UserRole::USER) {
+            $payment_system_id = null; // Обнуляем payment_system_id
+        }
+
         $stmt = $conn->prepare(
             "UPDATE users SET name = ?, login = ?, phone = ?, role = ?, payment_system_id = ? WHERE id = ?"
         );
         $stmt->bind_param(
-            "ssssii",
+            "ssssis",
             $name,
             $login,
             $phone,
@@ -53,7 +58,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_user'])) {
             "UPDATE users SET name = ?, login = ?, phone = ?, role = ? WHERE id = ?"
         );
         $stmt->bind_param(
-            "sssii",
+            "ssssi",
             $name,
             $login,
             $phone,
@@ -77,7 +82,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_user'])) {
         exit();
     }
 }
-
 
 $conn->close();
 ?>
