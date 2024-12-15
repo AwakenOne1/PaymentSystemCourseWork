@@ -43,13 +43,13 @@ $result = $conn->query("SELECT login, name, payment_system_id FROM users WHERE I
 $user = $result->fetch_assoc();
 
 
-$systems_result = $conn->query("SELECT Id, Name FROM paymentsystems");
+$systems_result = $conn->query("SELECT Id, Name FROM payment_systems");
 $payment_systems = [];
 while ($system = $systems_result->fetch_assoc()) {
     $payment_systems[] = $system;
 }
 
-$_SESSION['paymentsystems'] = $payment_systems;
+$_SESSION['payment_systems'] = $payment_systems;
 
 
 $minSum = 0.00;
@@ -74,7 +74,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                GROUP_CONCAT(CONCAT(tl.Action, ': ', tl.Changes, ' (', tl.Timestamp, ')') SEPARATOR '<br>') AS Changes
         FROM transactions t
         LEFT JOIN transaction_logs tl ON t.Id = tl.TransactionId
-        LEFT JOIN paymentsystems ps ON t.Payment_System_Id = ps.Id
+        LEFT JOIN payment_systems ps ON t.Payment_System_Id = ps.Id
         WHERE t.Sum BETWEEN ? AND ?";
 
     $params = [$minSum, $maxSum];
@@ -115,7 +115,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 FROM transactions t
                 LEFT JOIN transaction_logs tl ON t.Id = tl.TransactionId
                 LEFT JOIN users u ON tl.UserId = u.Id
-                LEFT JOIN paymentsystems ps ON t.Payment_System_Id = ps.Id
+                LEFT JOIN payment_systems ps ON t.Payment_System_Id = ps.Id
                 GROUP BY t.Id";
         $transactions_result = $conn->query($sql);
     } elseif ($user_role === 'moderator') {
@@ -126,7 +126,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 FROM transactions t
                 LEFT JOIN transaction_logs tl ON t.Id = tl.TransactionId
                 LEFT JOIN users u ON tl.UserId = u.Id
-                LEFT JOIN paymentsystems ps ON t.Payment_System_Id = ps.Id
+                LEFT JOIN payment_systems ps ON t.Payment_System_Id = ps.Id
                 WHERE t.Payment_System_Id = ?
                 GROUP BY t.Id";
         $stmt = $conn->prepare($sql);
@@ -141,7 +141,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 FROM transactions t
                 LEFT JOIN transaction_logs tl ON t.Id = tl.TransactionId
                 LEFT JOIN users u ON tl.UserId = u.Id
-                LEFT JOIN paymentsystems ps ON t.Payment_System_Id = ps.Id
+                LEFT JOIN payment_systems ps ON t.Payment_System_Id = ps.Id
                 WHERE t.UserId = ?
                 GROUP BY t.Id";
         $stmt = $conn->prepare($sql);
@@ -426,7 +426,7 @@ $conn->close();
     <div class="button-container">
         <button class="search-button" onclick="openSearchModal()">Поиск по критериям</button>
         <?php if ($user_role === 'user'): ?>
-            <a href="paymentSystems.php" class="create-button">Создать транзакцию</a>
+            <button class="create-button" onclick="openCreateModal()">Создать транзакцию</button>
         <?php endif; ?>    
     </div>
 </main>
