@@ -92,7 +92,7 @@
 </div>
 
 <script>
-    const maxDecimalValue = 99999999999.99; // Максимальное значение для decimal(14,2)
+    const maxDecimalValue = 99999999999.99; 
 
     function validateForm(fields) {
         for (const field of fields) {
@@ -101,11 +101,11 @@
             if (field === 'sum' || field === 'edit_sum') {
                 if (value <= 0) {
                     alert('Сумма должна быть больше 0.');
-                    return false; // Отменяем отправку формы
+                    return false; 
                 }
                 if (value > maxDecimalValue) {
                     alert('Сумма должна быть меньше ' + maxDecimalValue.toFixed(2) + '.');
-                    return false; // Отменяем отправку формы
+                    return false; 
                 }
             }
 
@@ -118,7 +118,7 @@
                 return false;
             }
         }
-        return true; // Позволяем отправку формы
+        return true; 
     }
 
     function validateSearch() {
@@ -127,7 +127,7 @@
 
         if (minSum >= maxSum) {
             alert('Минимальная сумма должна быть меньше максимальной.');
-            return false; // Отменяем отправку формы
+            return false; 
         }
 
         if (minSum < 0 || maxSum < 0) {
@@ -137,26 +137,26 @@
 
         if (minSum > maxDecimalValue || maxSum > maxDecimalValue) {
             alert('Суммы должны быть меньше ' + maxDecimalValue.toFixed(2) + '.');
-            return false; // Отменяем отправку формы
+            return false; 
         }
         if (field === 'destination'  && value.length > 150) {
                 alert(`Длина поля "${field === 'destination'}" не должна превышать 150 символов.`);
                 return false;
         }
 
-        return true; // Позволяем отправку формы
+        return true; 
     }
 
    function clearSearch() {
-        document.getElementById('searchForm').reset(); // Сбрасывает все поля формы
+        document.getElementById('searchForm').reset(); 
         document.getElementById('minSum').value = 0;
         document.getElementById('maxSum').value = 99999999999.99;
         document.getElementById('destination').value = '';
     
-        // Устанавливаем значение скрытого поля для сброса
+        
         document.getElementById('resetSearch').value = '1';
 
-        // Отправляем форму для сброса на сервере
+        
         document.getElementById('searchForm').submit();
    }
 </script>

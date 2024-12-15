@@ -56,16 +56,16 @@ $user_role = $_SESSION['user_role'];
         var roleSelect = document.getElementById("edit_role");
         var paymentSystemSelect = document.getElementById("payment_system");
 
-        // Проверяем, выбран ли 'user'
+        
         if (roleSelect.value === 'user' || roleSelect.value === 'admin') {
-            paymentSystemSelect.disabled = true; // Отключаем поле
-            paymentSystemSelect.value = ""; // Сбрасываем выбор
+            paymentSystemSelect.disabled = true; 
+            paymentSystemSelect.value = ""; 
         } else {
-            paymentSystemSelect.disabled = false; // Включаем поле
+            paymentSystemSelect.disabled = false; 
         }
     }
 
-    // Вызов функции при загрузке, чтобы установить начальное состояние
+    
     document.addEventListener("DOMContentLoaded", function() {
         togglePaymentSystem();
     });

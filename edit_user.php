@@ -23,21 +23,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_user'])) {
     $role = trim($_POST['role']);
     $payment_system_id = isset($_POST['payment_system_id']) && $_POST['payment_system_id'] !== ''
         ? intval($_POST['payment_system_id'])
-        : null; // Если пустое, установим NULL
-    $userId = intval($_POST['user_id']); // Получаем ID пользователя из формы
+        : null; 
+    $userId = intval($_POST['user_id']); 
 
-    // Проверка валидации
+    
     if (empty($phone) || empty($name) || empty($login) || empty($role)) {
         $_SESSION['error_message'] = "Некорректные данные.";
         header('Location: transactions.php');
         exit();
     }
 
-    // Проверка прав администратора
+    
     if ($user_role === UserRole::ADMIN) {
-        // Если роль изменяется на 'admin' или 'user', обнуляем payment_system_id
+        
         if ($role === UserRole::ADMIN || $role === UserRole::USER) {
-            $payment_system_id = null; // Обнуляем payment_system_id
+            $payment_system_id = null; 
         }
 
         $stmt = $conn->prepare(
@@ -49,11 +49,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_user'])) {
             $login,
             $phone,
             $role,
-            $payment_system_id, // Если NULL, будет автоматически преобразовано
+            $payment_system_id, 
             $userId
         );
     } elseif ($user_role === UserRole::MODERATOR && $role === UserRole::USER) {
-        // Модератор не может менять payment_system_id
+        
         $stmt = $conn->prepare(
             "UPDATE users SET name = ?, login = ?, phone = ?, role = ? WHERE id = ?"
         );
@@ -71,7 +71,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_user'])) {
         exit();
     }
 
-    // Выполняем запрос
+    
     if ($stmt->execute()) {
         $stmt->close();
         header('Location: users.php');

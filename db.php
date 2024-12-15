@@ -1,7 +1,7 @@
 <?php
-// submit_registration.php
 
-// Подключение к базе данных
+
+
 $servername = "localhost";
 $username = "lab";
 $password = "Qet2003_$";

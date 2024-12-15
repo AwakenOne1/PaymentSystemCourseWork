@@ -23,12 +23,10 @@ unset($_SESSION['error']);
 
         .container {
             max-width: 400px;
-            width: 100%; /* Адаптивная ширина */
             padding: 20px;
             background-color: #fff;
             border-radius: 8px;
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-            text-align: left; /* Выравнивание текста по левому краю */
         }
 
         h1 {
@@ -45,7 +43,6 @@ unset($_SESSION['error']);
         input[type="email"],
         input[type="password"],
         input[type="tel"] {
-            width: calc(100% - 20px); /* Учитываем отступы */
             padding: 10px;
             margin-bottom: 15px;
             border: 1px solid #ccc;
@@ -59,8 +56,6 @@ unset($_SESSION['error']);
             border: none;
             border-radius: 4px;
             cursor: pointer;
-            width: 100%; /* Полная ширина кнопки */
-            margin-bottom: 10px; /* Отступ между кнопками */
         }
 
         button:hover {
@@ -70,13 +65,9 @@ unset($_SESSION['error']);
         .login-link {
             display: block;
             text-align: center;
-            color: #007bff; /* Цвет текста для ссылки */
-            text-decoration: none; /* Убираем подчеркивание */
-            margin-top: 10px; /* Отступ сверху */
         }
 
         .login-link:hover {
-            text-decoration: underline; /* Подчеркивание при наведении */
         }
 
         .modal {

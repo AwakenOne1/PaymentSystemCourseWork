@@ -1,7 +1,7 @@
 <?php
 include 'db.php';
 
-// Проверка, если пользователь уже вошел в систему, перенаправляем на главную страницу
+
 if (session_status() == PHP_SESSION_NONE) {
     session_start();
 }
@@ -11,12 +11,12 @@ if (isset($_SESSION['user_id'])) {
     exit();
 }
 
-// Обработка формы входа
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $login = $_POST['login'];
     $password = $_POST['password'];
 
-    // Подключение к базе данных и проверка учетных данных
+    
     $stmt = $conn->prepare("SELECT id, password, role FROM users WHERE login = ?");
     $stmt->bind_param("s", $login);
     $stmt->execute();
@@ -24,13 +24,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $user = $result->fetch_assoc();
 
     if ($user && password_verify($password, $user['password'])) {
-        // Вход успешен, сохраняем ID и роль пользователя в сессии и перенаправляем на главную страницу
+        
         $_SESSION['user_id'] = $user['id'];
-        $_SESSION['user_role'] = $user['role']; // Сохраняем роль в сессии
+        $_SESSION['user_role'] = $user['role']; 
         header('Location: transactions.php');
         exit();
     } else {
-        // Неверные учетные данные, отображаем сообщение об ошибке
+        
         $error = 'Неверный логин или пароль';
     }
 
@@ -63,7 +63,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             background-color: #fff;
             border-radius: 8px;
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-            text-align: left; /* Выравнивание текста по левому краю */
         }
 
         h1 {
@@ -78,7 +77,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         input[type="text"],
         input[type="password"] {
-            width: calc(100% - 20px); /* Учитываем отступы */
             padding: 10px;
             margin-bottom: 15px;
             border: 1px solid #ccc;
@@ -102,13 +100,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         .register-link {
             display: block;
             text-align: center;
-            color: #007bff; /* Цвет текста для ссылки */
-            text-decoration: none; /* Убираем подчеркивание */
-            margin-top: 10px; /* Отступ сверху */
         }
 
         .register-link:hover {
-            text-decoration: underline; /* Подчеркивание при наведении */
         }
 
         .modal {

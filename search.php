@@ -7,7 +7,7 @@ if (!isset($_SESSION['user_id'])) {
     exit();
 }
 
-// Обработка формы поиска
+
 if (isset($_POST['search'])) {
     $search = $_POST['search'];
     $sql = "SELECT * FROM users WHERE name LIKE '%$search%'";
@@ -23,7 +23,7 @@ if (isset($_POST['search'])) {
     }
 }
 
-// Закрытие подключения
+
 $conn->close();
 ?>
 

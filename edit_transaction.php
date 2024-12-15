@@ -1,7 +1,7 @@
 <?php
 include 'db.php';
-include 'log_transaction.php';  // Подключаем файл с функцией логирования
-include 'TransactionStatus_enum.php';  // Подключаем класс для статусов транзакций
+include 'log_transaction.php';  
+include 'TransactionStatus_enum.php';  
 
 session_start();
 if (!isset($_SESSION['user_id'])) {
@@ -27,7 +27,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_transaction'])) 
         $stmt = $conn->prepare("UPDATE transactions SET Sum = ?, Destination = ?, Comment = ?, payment_system_id = ?, Status = ? WHERE Id = ?");
         $stmt->bind_param('dssisi', $sum, $destination, $comment, $payment_system_id, $status, $transactionId);
     } elseif ($user_role === 'moderator') {
-        // Модератор не может редактировать payment_system_id
+        
         if (!is_numeric($sum) || empty($destination) || strlen($destination) > 150 || strlen($comment) > 150 || $sum <= 0 || empty($status)) {
             $_SESSION['error_message'] = "Некорректные данные.";
             header('Location: transactions.php');
@@ -42,11 +42,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_transaction'])) 
         exit();
     }
 
-    // Выполняем запрос
+    
     if ($stmt->execute()) {
         $stmt->close();
 
-        // Логирование изменений
+        
         $changes = [];
         if ($oldData['Sum'] != $sum)
             $changes['sum'] = ['old' => $oldData['Sum'], 'new' => $sum];

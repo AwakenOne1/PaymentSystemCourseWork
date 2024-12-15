@@ -23,7 +23,7 @@ if (!isset($_SESSION['user_id'])) {
     exit();
 }
 
-// Выход из системы
+
 if (isset($_GET['action']) && $_GET['action'] === 'logout') {
     session_unset();
     session_destroy();
@@ -42,7 +42,7 @@ $user_role = $_SESSION['user_role'];
 $result = $conn->query("SELECT login, name, payment_system_id FROM users WHERE Id = $user_id");
 $user = $result->fetch_assoc();
 
-// Получаем список платежных систем
+
 $systems_result = $conn->query("SELECT Id, Name FROM paymentsystems");
 $payment_systems = [];
 while ($system = $systems_result->fetch_assoc()) {
@@ -51,7 +51,7 @@ while ($system = $systems_result->fetch_assoc()) {
 
 $_SESSION['paymentsystems'] = $payment_systems;
 
-// Обработка поиска
+
 $minSum = 0.00;
 $maxSum = 99999999999.99;
 $destination = '';
@@ -78,24 +78,24 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         WHERE t.Sum BETWEEN ? AND ?";
 
     $params = [$minSum, $maxSum];
-    $types = 'dd'; // Типы для $minSum и $maxSum
+    $types = 'dd'; 
 
     if (!empty($destination)) {
         $sql .= " AND t.Destination REGEXP ?";
         $params[] = $destination;
-        $types .= 's'; // Тип для $destination
+        $types .= 's'; 
     }
 
     if ($user_role === 'user') {
         $sql .= " AND t.UserId = ?";
         $params[] = $user_id;
-        $types .= 'i'; // Тип для $user_id
+        $types .= 'i'; 
     }
 
     if ($user_role === 'moderator') {
         $sql .= " AND t.Payment_System_Id = ?";
         $params[] = $user['payment_system_id'];
-        $types .= 'i'; // Тип для $payment_system_id
+        $types .= 'i'; 
     }
 
     $sql .= " GROUP BY t.Id";
@@ -106,7 +106,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $result = $stmt->get_result();
     $transactions = $result->fetch_all(MYSQLI_ASSOC);
 } else {
-    // Получение всех транзакций, если поиск не выполнялся
+    
     if ($user_role === 'admin') {
         $sql = "SELECT t.*, 
                 ps.Rating AS PaymentSystemRating,
@@ -130,7 +130,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 WHERE t.Payment_System_Id = ?
                 GROUP BY t.Id";
         $stmt = $conn->prepare($sql);
-        $stmt->bind_param('i', $user['payment_system_id']);  // Используем payment_system_id текущего пользователя
+        $stmt->bind_param('i', $user['payment_system_id']);  
         $stmt->execute();
         $transactions_result = $stmt->get_result();
     } else {
@@ -151,7 +151,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     }
     $transactions = $transactions_result->fetch_all(MYSQLI_ASSOC);
 }
-// Закрытие соединения после выполнения всех запросов
+
 $conn->close();
 ?>
 
@@ -163,7 +163,6 @@ $conn->close();
     <title>Транзакции</title>
     <link rel="stylesheet" href="static.css">
     <style>
-        /* Стили для страницы */
         body {
             font-family: Arial, sans-serif;
             background-color: #f4f4f4;
@@ -173,7 +172,6 @@ $conn->close();
 
         header {
             display: flex;
-            justify-content: space-between; /* Это оставит пространство между тремя основными блоками */
             align-items: center;
             padding: 1.5em;
             background-color: #4CAF50;
@@ -186,16 +184,10 @@ $conn->close();
         }
 
         .user-info {
-            /* Уберите margin-right: auto; */
         }
 
         .nav-tabs {
             display: flex;
-            justify-content: center; /* Центрирование вкладок */
-            flex-grow: 1; /* Позволяет занять оставшееся пространство, но мы это уберем для строгого центрирования */
-            position: absolute; /* Позиционирование относительно header */
-            left: 50%; /* Сдвиг на 50% ширины родителя */
-            transform: translateX(-50%); /* Коррекция позиции на 50% своей ширины */
         }
 
         .logout a {
@@ -222,7 +214,6 @@ $conn->close();
             display: flex;
             overflow-x:auto;
             flex-direction: column;
-            align-items: flex-start; /* Выравнивание по левому краю */
         }
         table {
             width: 100%;
@@ -287,10 +278,8 @@ $conn->close();
             margin: 1em 0;
         }
         .search-button {
-            margin-right: 0.5em; /* Уменьшено расстояние между кнопками */
         }
         .create-button {
-            /* Никаких дополнительных маргинов для центрирования */
         }
         .create-button, .search-button {
             background-color: #4CAF50;
@@ -491,15 +480,15 @@ $conn->close();
         function updateRating(transactionId) {
             var rating = document.getElementById('rating_' + transactionId).value;
 
-            // Отправка AJAX-запроса для обновления рейтинга банка
+            
             var xhr = new XMLHttpRequest();
             xhr.open('POST', 'update_rating.php', true);
             xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
             xhr.onreadystatechange = function() {
                 if (xhr.readyState === 4 && xhr.status === 200) {
-                    // Обработка успешного обновления рейтинга
+                    
                     console.log(xhr.responseText);
-                    // Обновление страницы после успешного обновления рейтинга
+                    
                     location.reload();
                 }
             };

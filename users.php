@@ -17,7 +17,7 @@
      header('Location: transactions.php');
      exit();
  }
- // Выход из системы
+ 
  if (isset($_GET['action']) && $_GET['action'] === 'logout') {
      session_unset();
      session_destroy();
@@ -29,7 +29,7 @@
      unset($_SESSION['error_message']);
  }
 
- // Подключение к базе данных и получение данных из таблицы users
+ 
  $result = $conn->query("SELECT users.*, paymentsystems.name AS payment_system_name FROM users
                         LEFT JOIN paymentsystems ON users.payment_system_id = paymentsystems.id");
  $users = $result->fetch_all(MYSQLI_ASSOC);
@@ -47,7 +47,6 @@
     <title>Управление пользователями</title>
     <link rel="stylesheet" href="static.css">
     <style>
-        /* Стили для страницы */
         body {
             font-family: Arial, sans-serif;
             background-color: #f4f4f4;
@@ -56,7 +55,6 @@
         }
         header {
             display: flex;
-            justify-content: space-between; /* Это оставит пространство между тремя основными блоками */
             align-items: center;
             padding: 1.5em;
             background-color: #4CAF50;
@@ -69,16 +67,10 @@
         }
 
         .user-info {
-            /* Уберите margin-right: auto; */
         }
 
         .nav-tabs {
             display: flex;
-            justify-content: center; /* Центрирование вкладок */
-            flex-grow: 1; /* Позволяет занять оставшееся пространство, но мы это уберем для строгого центрирования */
-            position: absolute; /* Позиционирование относительно header */
-            left: 50%; /* Сдвиг на 50% ширины родителя */
-            transform: translateX(-50%); /* Коррекция позиции на 50% своей ширины */
         }
 
         .logout a {
@@ -104,7 +96,6 @@
             padding: 2em;
             display: flex;
             flex-direction: column;
-            align-items: flex-start; /* Выравнивание по левому краю */
         }
         table {
             width: 100%;
@@ -163,10 +154,8 @@
             margin: 1em 0;
         }
         .search-button {
-            margin-right: 0.5em; /* Уменьшено расстояние между кнопками */
         }
         .create-button {
-            /* Никаких дополнительных маргинов для центрирования */
         }
         .create-button, .search-button {
             background-color: #4CAF50;
@@ -282,7 +271,7 @@
     document.getElementById('edit_login').value = login;
     document.getElementById('edit_phone').value = phone;
     document.getElementById('edit_role').value = role;
-    document.getElementById('payment_system').value = payment_system_id; // Устанавливаем значение платежной системы
+    document.getElementById('payment_system').value = payment_system_id; 
     document.getElementById('editModal').style.display = 'flex';
 }
 
